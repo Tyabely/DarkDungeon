@@ -97,6 +97,7 @@ Rules of use:
 **Living docs:**
 - `DD_Context.md` — this file: how we work, learner profile, roadmap.
 - `DD_GDO.md` — game design. Expected to change; changes are cheap.
+- `DD_Conventions.md` — folders, naming, Blueprint style, Git rules. Quick reference.
 - `DD_LearningLog.md` *(to create)* — date · what I learned · what tripped me up. Short.
 - `DD_Decisions.md` *(to create)* — lightweight decision records: "Decided X over Y because Z". Shows engineering thinking in a portfolio.
 
