@@ -72,3 +72,14 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Wasn't sure whether the camera belonged in Default Pawn Class (no: that stays None).
   - First camera (0, 0, 400, Pitch −45 / Yaw 45) hovered over a room corner, looked diagonally and clipped the nearest Area. Reframed straight-on.
   - Couldn't find the Camera Actor variable type; Promote to Variable solved it.
+
+**2026-10-14 · M1-T5 · Click input**
+- **Learned:**
+  - Enhanced Input splits *meaning* from *keys*: the Input Action (`IA_Select`) is the meaning, the Mapping Context (`IMC_Battle`) binds keys to it, and the Player Controller switches the context on.
+  - A plain click is a Digital (bool) action.
+  - The context is added on BeginPlay through the Enhanced Input Local Player Subsystem → Add Mapping Context. Since a Blueprint has only one BeginPlay, the new nodes go into the existing chain.
+  - Every Input Action gets its own event node in Blueprints. Its **Started** pin fires once per press.
+- **Tripped up:**
+  - In the plan, thought the Input Action itself detects when and how long the button is held. That's the job of Triggers and the event's pins.
+  - Thought the Print String could go into `IMC_Battle`. A Mapping Context is a data table with no graph, so all logic goes in a Blueprint (the controller).
+  - Wasn't sure whether "add the context on start" meant BeginPlay or a Cast. It's BeginPlay.

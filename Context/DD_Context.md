@@ -131,16 +131,17 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T4 – Top-down camera & Player Controller.** ✅ 2026-10-14 See the whole board when you press Play, mouse cursor visible.
   *Done when:* `BP_BattlePlayerController` (in `Core/`) is set in the Game Mode; on PIE the view is a fixed top-down (slightly angled is fine) shot of the whole room; mouse cursor is visible; no pawn wandering around.
   *(Built as: `BattleCamera` Camera Actor in the level, (385, −140, 600), Pitch −55 / Yaw 90; the controller finds it on BeginPlay → Is Valid → Set View Target with Blend. See Decisions #22–#25.)*
-- [ ] **T5 – Click input.** A click becomes a game command.
+- [x] **T5 – Click input.** ✅ 2026-10-14 A click becomes a game command.
   *Done when:* `IA_Select` + `IMC_Battle` (in `Input/`) exist; the Player Controller adds the mapping context on start; left click prints "Select" (Print String) in PIE.
+  *(Built as: `IA_Select` Digital (bool), no triggers; `IMC_Battle` maps Left Mouse Button → `IA_Select`; BeginPlay → Get Enhanced Input Local Player Subsystem → Add Mapping Context (priority 0), then the camera logic; `IA_Select` **Started** → Print String "LMB pressed!". See Decisions #26–#27.)*
 - [ ] **T6 – Pick the Area under the cursor.** Which Area did I click?
   *Done when:* clicking an Area prints *that* Area's name; clicking empty space prints nothing (or "none"); picking ignores things that aren't Areas.
 - [ ] **T7 – Highlight.** Show the selection.
   *Done when:* the clicked Area changes look (material instance, e.g. `MI_Area_Highlighted`); only one Area is highlighted at a time; clicking empty space clears it; the Area owns *how* it looks highlighted (the controller only says "you're selected / not selected").
 
-**Next session starts with:** T5. User sketches the plan (what an Input Action vs a Mapping Context is for, and where in the controller the mapping gets added), Claude reviews it, then build. Leftovers (optional): from T3, labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`), and `TopCube`'s Relative Location Z = 100 has no note explaining it; from T4, the camera's X (385) is ~65 cm off the room's centre (~320), and the near row of Areas sits close to the bottom edge of the frame.
+**Next session starts with:** T6. User sketches the plan: how to ask "what's under the mouse cursor?" from the controller (hint: the controller has a "hit result under cursor" family of nodes), and how to make sure only Areas count. Claude reviews it, then build. The T5 Print String gets replaced by the picking logic. Leftovers (optional): from T3, labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`), and `TopCube`'s Relative Location Z = 100 has no note explaining it; from T4, the camera's X (385) is ~65 cm off the room's centre (~320), and the near row of Areas sits close to the bottom edge of the frame.
 
-**Last finished:** M1-T4 Top-down camera & Player Controller ✅ (2026-10-14).
+**Last finished:** M1-T5 Click input ✅ (2026-10-14).
 
 #### Milestones
 
@@ -235,6 +236,13 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Is Valid**: a node that checks whether a reference actually points at something. Prevents "Accessed None" errors when, e.g., no camera was found.
 - **Object Reference (variable type)**: a variable that points at one existing thing in the game, e.g. `BattleCamera` → the camera in the level. Typing it as the exact class (Camera Actor, not just Actor) lets the editor offer that class's options.
 - **Promote to Variable**: right-click a pin → creates a variable of exactly that pin's type and wires a SET for you.
+- **Enhanced Input**: UE 5's input system. It separates *what the player means* (an Input Action) from *which key does it* (a Mapping Context), so logic never mentions a specific key.
+- **Input Action (`IA_`)**: a data asset naming one thing the player can mean, e.g. `IA_Select` = "select something". Its **Value Type** says what it carries: Digital (bool) for a plain click, Axis for things like a stick or scroll amount.
+- **Input Mapping Context (`IMC_`)**: a data asset listing "this key → that action", e.g. `IMC_Battle`: Left Mouse Button → `IA_Select`. It's a table with no graph, so no logic lives in it. It does nothing until something adds it for the player.
+- **Subsystem / Enhanced Input Local Player Subsystem**: a subsystem is a built-in helper object the engine creates for you automatically, one per something (here: one per local player). This one keeps the list of active Mapping Contexts; **Add Mapping Context** switches one on.
+- **Mapping Context Priority**: when two active contexts bind the same key, the higher priority wins. With only one context, 0 is fine.
+- **Trigger (Enhanced Input)**: a rule deciding *when* an action fires: on press, on release, after holding 0.5 s… Set on the Input Action or on one mapping. None set = fire while the key is down.
+- **Started vs Triggered (event pins)**: on an Input Action event, **Started** fires once at the moment of the press; **Triggered** fires every frame the trigger condition holds, so with no triggers set it repeats while you hold the button. For "one click = one command", use Started.
 - **Event Dispatcher**: a "shout". One Blueprint shouts "enemy died!" and anyone who signed up to listen reacts. The shouter doesn't need to know who's listening.
 - **Interface**: a promise that several different Blueprints understand the same message. E.g. "TakeDamage" works on heroes and enemies alike, without asking "are you a hero or an enemy?" first.
 - **Casting**: asking "are you specifically a `BP_Ghoul`?" before talking to something. Useful sometimes; chains of casts make Blueprints fragile, which is why Interfaces and Dispatchers exist.
