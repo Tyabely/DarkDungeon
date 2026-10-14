@@ -58,3 +58,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - Rotating Areas by ±90° made `SizeX` point along world Y and moved the corner they grow from to another side, so placement was hard to reason about. Fixed: all rotations 0, sizes swapped instead.
   - Started the task in the wrong Claude session; the work was fine, just checked again here.
+
+**2026-10-14 · M1-T4 · Top-down camera & Player Controller**
+- **Learned:**
+  - Game Mode says *which* classes the game uses (pawn, controller, player state). The Player Controller owns per-player things: the cursor and what you look through.
+  - With Default Pawn Class = None, a plain PlayerController is enough for "no body"; it just looks wherever it's told.
+  - A camera can stand in the level as a Camera Actor; the controller switches to it with Set View Target with Blend on Event BeginPlay.
+  - Show Mouse Cursor is a Class Defaults checkbox, no nodes needed.
+  - Is Valid guards against a missing reference; Promote to Variable creates a correctly typed variable.
+  - Pitch is measured from the horizon (−90 = straight down); Yaw on a multiple of 90 keeps rectangles looking like rectangles.
+- **Tripped up:**
+  - Picked `NoPawnPlayerController` as the parent. PIE failed with "Couldn't spawn player: PlayerState is null" (that class skips the Player State). Fixed by reparenting to `PlayerController`.
+  - Wasn't sure whether the camera belonged in Default Pawn Class (no: that stays None).
+  - First camera (0, 0, 400, Pitch −45 / Yaw 45) hovered over a room corner, looked diagonally and clipped the nearest Area. Reframed straight-on.
+  - Couldn't find the Camera Actor variable type; Promote to Variable solved it.

@@ -128,8 +128,9 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T3 – Lay out the room.** ✅ 2026-10-14 Hand-build the MVP room (GDO §3).
   *Done when:* 8–10 `BP_Area` instances of mixed sizes form one room (look of refs 1–5); Areas touch edge to edge (gaps only where wanted for the shape), each with a border of constant width at any size; sensible labels in the Outliner (e.g. `Area_01`…), grouped in an Outliner folder.
   *(Changed during the task: "small gaps between Areas" became "touching Areas + border", see Decisions #17.)*
-- [ ] **T4 – Top-down camera & Player Controller.** See the whole board when you press Play, mouse cursor visible.
+- [x] **T4 – Top-down camera & Player Controller.** ✅ 2026-10-14 See the whole board when you press Play, mouse cursor visible.
   *Done when:* `BP_BattlePlayerController` (in `Core/`) is set in the Game Mode; on PIE the view is a fixed top-down (slightly angled is fine) shot of the whole room; mouse cursor is visible; no pawn wandering around.
+  *(Built as: `BattleCamera` Camera Actor in the level, (385, −140, 600), Pitch −55 / Yaw 90; the controller finds it on BeginPlay → Is Valid → Set View Target with Blend. See Decisions #22–#25.)*
 - [ ] **T5 – Click input.** A click becomes a game command.
   *Done when:* `IA_Select` + `IMC_Battle` (in `Input/`) exist; the Player Controller adds the mapping context on start; left click prints "Select" (Print String) in PIE.
 - [ ] **T6 – Pick the Area under the cursor.** Which Area did I click?
@@ -137,9 +138,9 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T7 – Highlight.** Show the selection.
   *Done when:* the clicked Area changes look (material instance, e.g. `MI_Area_Highlighted`); only one Area is highlighted at a time; clicking empty space clears it; the Area owns *how* it looks highlighted (the controller only says "you're selected / not selected").
 
-**Next session starts with:** T4. User sketches the plan (which Blueprint owns the camera, where it sits so the whole room fits), Claude reviews it, then build. Leftovers from T3 (optional): labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`); `TopCube`'s Relative Location Z = 100 has no note explaining it.
+**Next session starts with:** T5. User sketches the plan (what an Input Action vs a Mapping Context is for, and where in the controller the mapping gets added), Claude reviews it, then build. Leftovers (optional): from T3, labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`), and `TopCube`'s Relative Location Z = 100 has no note explaining it; from T4, the camera's X (385) is ~65 cm off the room's centre (~320), and the near row of Areas sits close to the bottom edge of the frame.
 
-**Last finished:** M1-T3 Lay out the room ✅ (2026-10-14).
+**Last finished:** M1-T4 Top-down camera & Player Controller ✅ (2026-10-14).
 
 #### Milestones
 
@@ -224,6 +225,16 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Variable / Array / Struct / Enum**: a Variable is a labeled box holding one value (HP = 500). An Array is a list of boxes (all enemies in the room). A Struct is a bundle of different values that belong together (an ability's name + cost + damage range). An Enum is a fixed list of choices (Target: Closest / Furthest / Lowest HP).
 - **Game Mode / Game State**: Game Mode holds the *rules* of the match ("battle starts when…, you lose when…"). Game State holds the *current situation* everyone can read ("the clock is at 12.5s").
 - **Player Controller**: the Blueprint that represents *you*, the person at the keyboard. It turns mouse clicks into game commands like "select this Area".
+- **Player State**: a small actor the Game Mode creates for every player to hold info *about* that player (name, score). Unreal won't let a player join without one, which is why the "pawnless" `NoPawnPlayerController` failed with "PlayerState is null".
+- **Reparent**: changing which parent class a Blueprint is built on (Class Settings → Parent Class). Used in T4 to move `BP_BattlePlayerController` from `NoPawnPlayerController` to plain `PlayerController`.
+- **Camera Actor**: a camera that stands in the level on its own, with no body attached. `BattleCamera` is one. A camera *component* is the same idea but lives inside another actor, like a character.
+- **View Target**: the actor whose eyes you see the game through. The Player Controller's **Set View Target with Blend** switches it (Blend Time 0 = instant cut).
+- **Pitch / Yaw / Roll**: the three rotation angles. Pitch = nose up/down (−90 looks straight down), Yaw = turning left/right, Roll = tilting sideways.
+- **Pilot (an actor)**: right-click an actor in the Outliner → Pilot. The viewport looks through it and moves it as you fly around. Eject to stop. Handy for framing a camera.
+- **Event BeginPlay**: fires once when an actor starts existing in the running game. The earliest point where everything in the level can be found.
+- **Is Valid**: a node that checks whether a reference actually points at something. Prevents "Accessed None" errors when, e.g., no camera was found.
+- **Object Reference (variable type)**: a variable that points at one existing thing in the game, e.g. `BattleCamera` → the camera in the level. Typing it as the exact class (Camera Actor, not just Actor) lets the editor offer that class's options.
+- **Promote to Variable**: right-click a pin → creates a variable of exactly that pin's type and wires a SET for you.
 - **Event Dispatcher**: a "shout". One Blueprint shouts "enemy died!" and anyone who signed up to listen reacts. The shouter doesn't need to know who's listening.
 - **Interface**: a promise that several different Blueprints understand the same message. E.g. "TakeDamage" works on heroes and enemies alike, without asking "are you a hero or an enemy?" first.
 - **Casting**: asking "are you specifically a `BP_Ghoul`?" before talking to something. Useful sometimes; chains of casts make Blueprints fragile, which is why Interfaces and Dispatchers exist.
