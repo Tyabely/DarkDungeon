@@ -83,3 +83,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - In the plan, thought the Input Action itself detects when and how long the button is held. That's the job of Triggers and the event's pins.
   - Thought the Print String could go into `IMC_Battle`. A Mapping Context is a data table with no graph, so all logic goes in a Blueprint (the controller).
   - Wasn't sure whether "add the context on start" meant BeginPlay or a Cast. It's BeginPlay.
+
+**2026-10-15 · M1-T6 · Pick the Area under the cursor**
+- **Learned:**
+  - Get Hit Result Under Cursor by Channel fires the ray from the camera through the cursor; no manual line trace maths needed.
+  - The Hit Result is a struct: Break Hit Result → Hit Actor.
+  - Cast To BP_Area does two jobs at once: filters out everything that isn't an Area, and hands back a `BP_Area`-typed reference (needed in T7).
+  - By Channel vs For Objects: a kind of ray that components respond to, vs a list of collider types to look for.
+  - A reference's type doesn't promise it points at anything: any reference can be None. The caller checks with Is Valid, and the Is Not Valid branch is real game logic ("clicked nothing" → print "none" now, clear the highlight in T7).
+  - Logic that answers a question goes in a function; the event decides what to do with the answer.
+- **Tripped up:**
+  - For Objects "didn't work": its Object Types list was empty, so the ray could hit nothing.
+  - Clicking the floor printed the last clicked Area. The Cast Failed path never reached a Return Node, so the caller's output pin kept its old value. Making the variable local, removing it, or toggling Pure didn't help, because none of them was the cause. Fixed with a second Return Node on Cast Failed.
+  - Get Display Name on an empty reference gave a blank message, which looked like "maybe it works".
+  - Questioned why Is Valid is needed when the output is typed `BP_Area` (type ≠ "something is there"), and whether the check is duplicated (the cast asks "is it an Area?", Is Valid asks "did I get one?"). A bool `Found` output would be an equally valid alternative.

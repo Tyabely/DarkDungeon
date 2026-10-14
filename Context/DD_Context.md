@@ -134,14 +134,15 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T5 – Click input.** ✅ 2026-10-14 A click becomes a game command.
   *Done when:* `IA_Select` + `IMC_Battle` (in `Input/`) exist; the Player Controller adds the mapping context on start; left click prints "Select" (Print String) in PIE.
   *(Built as: `IA_Select` Digital (bool), no triggers; `IMC_Battle` maps Left Mouse Button → `IA_Select`; BeginPlay → Get Enhanced Input Local Player Subsystem → Add Mapping Context (priority 0), then the camera logic; `IA_Select` **Started** → Print String "LMB pressed!". See Decisions #26–#27.)*
-- [ ] **T6 – Pick the Area under the cursor.** Which Area did I click?
+- [x] **T6 – Pick the Area under the cursor.** ✅ 2026-10-15 Which Area did I click?
   *Done when:* clicking an Area prints *that* Area's name; clicking empty space prints nothing (or "none"); picking ignores things that aren't Areas.
+  *(Built as: function `GetAreaUnderCursor` (impure) on the controller: Get Hit Result Under Cursor by Channel (Visibility) → Break Hit Result → Cast To BP_Area → success returns `As BP_Area`, Cast Failed returns an empty reference through a second Return Node; output type `BP_Area`. `IA_Select` **Started** → `GetAreaUnderCursor` → Is Valid → "Hit:" + Get Display Name / "none". See Decisions #28–#31.)*
 - [ ] **T7 – Highlight.** Show the selection.
   *Done when:* the clicked Area changes look (material instance, e.g. `MI_Area_Highlighted`); only one Area is highlighted at a time; clicking empty space clears it; the Area owns *how* it looks highlighted (the controller only says "you're selected / not selected").
 
-**Next session starts with:** T6. User sketches the plan: how to ask "what's under the mouse cursor?" from the controller (hint: the controller has a "hit result under cursor" family of nodes), and how to make sure only Areas count. Claude reviews it, then build. The T5 Print String gets replaced by the picking logic. Leftovers (optional): from T3, labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`), and `TopCube`'s Relative Location Z = 100 has no note explaining it; from T4, the camera's X (385) is ~65 cm off the room's centre (~320), and the near row of Areas sits close to the bottom edge of the frame.
+**Next session starts with:** T7. User sketches the plan: what should the Area own (a "set highlighted yes/no" function that swaps the top cube's material), and what should the controller remember so only one Area is highlighted at a time (hint: a variable holding the currently selected Area). The Is Not Valid branch from T6 is where "clear the selection" goes. Small T6 nits (optional): the Append's "Hit:" has no trailing space (prints `Hit:Area_9`); the function's output pin is still named `HitActor`, and `Area` would say what it holds. Leftovers (optional): from T3, labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`), and `TopCube`'s Relative Location Z = 100 has no note explaining it; from T4, the camera's X (385) is ~65 cm off the room's centre (~320), and the near row of Areas sits close to the bottom edge of the frame.
 
-**Last finished:** M1-T5 Click input ✅ (2026-10-14).
+**Last finished:** M1-T6 Pick the Area under the cursor ✅ (2026-10-15).
 
 #### Milestones
 
@@ -243,9 +244,19 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Mapping Context Priority**: when two active contexts bind the same key, the higher priority wins. With only one context, 0 is fine.
 - **Trigger (Enhanced Input)**: a rule deciding *when* an action fires: on press, on release, after holding 0.5 s… Set on the Input Action or on one mapping. None set = fire while the key is down.
 - **Started vs Triggered (event pins)**: on an Input Action event, **Started** fires once at the moment of the press; **Triggered** fires every frame the trigger condition holds, so with no triggers set it repeats while you hold the button. For "one click = one command", use Started.
+- **Trace (line trace / raycast)**: an invisible ray fired into the level; the first thing with collision in its way is the hit. **Get Hit Result Under Cursor** fires one from the camera through the mouse cursor, so you don't have to work out the start and end points yourself.
+- **Hit Result**: a struct with everything about one trace hit: which actor, which component, where. Open it with **Break Hit Result** to get e.g. **Hit Actor**.
+- **Break (a struct)**: a node that unpacks a struct into its separate values, like opening a parcel. **Make** does the opposite.
+- **Trace channel vs Object type**: two ways to say what a trace may hit. **By Channel**: you pick a kind of ray (*Visibility*, *Camera*), and every component's collision settings say Block / Overlap / Ignore for that kind. **For Objects**: you list the kinds of collider you want (*WorldStatic*, *WorldDynamic*, *Pawn*…); an empty list hits nothing.
+- **Collision response (Block / Overlap / Ignore)**: how a component reacts to a trace channel or another collider. Block stops a trace and counts as a hit.
+- **None (null)**: the empty value of any object reference, meaning "points at nothing". Every reference can be None, whatever its type. The type says *what kind* of thing it would point at, not that something is there.
+- **Accessed None**: the error logged when a graph tries to use a reference that is None (e.g. calling a function on it). The node simply doesn't run. Check with Is Valid first.
+- **Return Node**: the node that ends a function and hands its outputs back. A function can have several; every exec path out of a function should end in one. If a path ends without one, the caller's output pin keeps its **old** value (the T6 "last Area still printed" bug).
+- **Pure vs impure function**: a **pure** function has no white exec pins and re-runs every time something reads its output (fine for maths). An **impure** one runs once, at a clear point in the exec chain. Use impure for questions about the world at a specific moment, like a trace.
+- **Get Display Name vs Get Object Name**: Display Name gives the Outliner label in the editor (`Area_9`). Object Name gives the internal name (`BP_Area_C_5`).
 - **Event Dispatcher**: a "shout". One Blueprint shouts "enemy died!" and anyone who signed up to listen reacts. The shouter doesn't need to know who's listening.
 - **Interface**: a promise that several different Blueprints understand the same message. E.g. "TakeDamage" works on heroes and enemies alike, without asking "are you a hero or an enemy?" first.
-- **Casting**: asking "are you specifically a `BP_Ghoul`?" before talking to something. Useful sometimes; chains of casts make Blueprints fragile, which is why Interfaces and Dispatchers exist.
+- **Casting (Cast To X)**: asking "are you specifically a `BP_Ghoul`?" before talking to something. On success the node hands you the same thing *as that class*, so you can use its own variables and functions; otherwise it takes the **Cast Failed** exit. T6 uses Cast To BP_Area as the "only Areas count" filter. Useful sometimes; chains of casts make Blueprints fragile, which is why Interfaces and Dispatchers exist.
 - **Data Asset / Data Table**: files that hold *data only*, no logic. E.g. "Warrior: HP 1100, abilities Slash/Cleave/…". Changing a number means editing data, not rewiring Blueprints.
 - **Gameplay Tag**: a label like `Status.Bleed` or `Ability.Warrior.Charge`, organized in a tree. Safer than typing text by hand, because a typo can't create a "new" tag by accident.
 - **UMG** (Unreal Motion Graphics): Unreal's tool for building UI: buttons, health bars, the timeline.
