@@ -15,3 +15,13 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - The editor wrote `.mcp.json` into `DarkDungeon_Project\` instead of the repo root, so it ended up committed in both places.
   - Claude Code's permission rules can't tell apart the ~830 editor functions (they all go through one tool), so the planned "deny list" had to become a hook.
+
+**2026-10-14 · M0 F–G · GitHub remote**
+- **Learned:**
+  - `origin` is the remote's nickname, `main` is the branch, `master` is the old name for `main`.
+  - Tracking links local `main` to `origin/main`.
+  - LFS files travel separately from commits: the commit holds only a small pointer.
+- **Tripped up:**
+  - GitKraken asked for the upstream branch and pre-filled my username where the branch name (`main`) should go.
+  - The first push uploaded the commits but none of the 418 LFS files, without any error. Fixed with `git lfs push --all origin` (it needed its own GitHub sign-in).
+  - Lesson: "pushed" isn't "backed up" until the LFS files are checked too.

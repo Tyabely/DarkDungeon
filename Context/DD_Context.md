@@ -13,7 +13,7 @@ The purpose of this project is to create a small UE5 game, primarily for learnin
 | UE version | **5.8** ✅ (freeze it for the whole project, no mid-project engine upgrades) |
 | Time budget | ~6–10 h / week ✅ |
 | Target for MVP | No deadline ✅ (rough expectation: MVP in ~2–3 months) |
-| Version control | Git + Git LFS, GitHub private repo → public for portfolio ✅ |
+| Version control | Git + Git LFS, **public** GitHub repo [Tyabely/DarkDungeon](https://github.com/Tyabely/DarkDungeon), managed in GitKraken ✅ |
 | Project location | Repo root `F:\P_UE5\DarkDungeon` (holds `Context/`, `README.md`, `.gitattributes`); Unreal project in `F:\P_UE5\DarkDungeon\DarkDungeon_Project\` (its own `.gitignore` lives there) ✅ |
 
 ---
@@ -119,22 +119,15 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M0 – Setup** · done when: the repo is on GitHub (private), the latest commit is pushed, and `.uasset` files show up there as LFS files.
-- [x] A. UE 5.8 project created (Top Down Strategy template)
-- [x] B. Git + LFS set up locally
-- [x] C. Folder structure & naming conventions (`DD_Conventions.md`)
-- [x] D. Unreal MCP connected, tools audited, read-only enforced by a hook (`.claude/`)
-- [x] E. `CLAUDE.md` + Learning Log + Decisions docs; status tracking in this block
-- [ ] F. Remove the duplicate `DarkDungeon_Project/.mcp.json` from the repo (the root `.mcp.json` is the one in use)
-- [ ] G. GitHub remote: check GitHub's free LFS quota → create a private repo with GitHub Desktop → first push
+**M1 – The Board** · not started. Claude writes the task list (brief + "done when" for each task) at the start of the first M1 session.
 
-**Next:** M1 – The Board. Claude writes its task list (brief + "done when" for each task) when M1 starts.
+**Last finished:** M0 – Setup ✅ (2026-10-14). Repo public at [github.com/Tyabely/DarkDungeon](https://github.com/Tyabely/DarkDungeon), all commits and all 418 LFS files verified on GitHub.
 
 #### Milestones
 
 | # | Milestone | Status | Playable result | UE concepts learned |
 |---|---|---|---|---|
-| M0 | **Setup** | 🔄 in progress | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
+| M0 | **Setup** | ✅ 2026-10-14 | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
 | M1 | **The Board** | ⬜ | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
 | M2 | **Pieces on the Board** | ⬜ | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
@@ -173,6 +166,9 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Copy-pasted nodes (T3D text)**: when you select Blueprint nodes and press Ctrl+C, UE copies them as text. Paste that text to me and I can read exactly what you built.
 - **Remote** (usually named `origin`): a second copy of your repo on another computer, here GitHub's servers. It's your backup and your portfolio page.
 - **Push / Pull / Clone**: *push* sends your new commits up to the remote. *Pull* brings commits down from it. *Clone* downloads a whole repo, history included, onto a new PC.
+- **origin / main / master**: `origin` is the nickname of the remote (GitHub). `main` is your primary branch, a line of commits. `master` is the old name for the same thing. `origin/main` means "the `main` branch as it is on GitHub".
+- **Tracking (upstream)**: the one-time link saying "my local `main` syncs with `origin/main`". After it's set, Push and Pull know where to go.
+- **LFS pointer**: the tiny text note Git stores in place of a big file ("the real file has ID fdee63… and is 308 KB"). The real file is uploaded separately to LFS storage. If that upload fails, GitHub shows the files but a clone gets only the notes.
 
 **Claude Code**
 - **Session**: one conversation with Claude. It forgets everything when it ends, so anything worth keeping goes into the docs. One task per session.
