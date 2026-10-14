@@ -119,16 +119,33 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M1 – The Board** · not started. Claude writes the task list (brief + "done when" for each task) at the start of the first M1 session.
+**M1 – The Board** · 🔄 started 2026-10-14. Goal: a fixed room of rectangle Areas seen from a top-down camera; click an Area to highlight it.
 
-**Last finished:** M0 – Setup ✅ (2026-10-14). Repo public at [github.com/Tyabely/DarkDungeon](https://github.com/Tyabely/DarkDungeon), all commits and all 418 LFS files verified on GitHub.
+- [x] **T1 – Battle level & Game Mode.** ✅ 2026-10-14 Our own empty level and our own rules Blueprint, so we stop living inside the template's level.
+  *Done when:* `LVL_Battle_01` (in `DarkDungeon/Maps/`) has floor + light; `BP_BattleGameMode` (in `Core/`) is the level's Game Mode override; Project Settings → Maps & Modes opens/plays `LVL_Battle_01` by default; PIE starts there with no template character running around.
+- [ ] **T2 – `BP_Area` actor.** One reusable rectangle that sizes itself.
+  *Done when:* `BP_Area` (in `Board/`) has a sensible component setup (root + visible mesh); an **Instance Editable** size variable drives the mesh size through the **Construction Script**; 2–3 copies in the level with different sizes, and changing the size in Details updates the viewport live.
+- [ ] **T3 – Lay out the room.** Hand-build the MVP room (GDO §3).
+  *Done when:* 8–10 `BP_Area` instances of mixed sizes form one room (look of refs 1–5), small gaps between Areas, sensible labels in the Outliner (e.g. `Area_01`…), grouped in an Outliner folder.
+- [ ] **T4 – Top-down camera & Player Controller.** See the whole board when you press Play, mouse cursor visible.
+  *Done when:* `BP_BattlePlayerController` (in `Core/`) is set in the Game Mode; on PIE the view is a fixed top-down (slightly angled is fine) shot of the whole room; mouse cursor is visible; no pawn wandering around.
+- [ ] **T5 – Click input.** A click becomes a game command.
+  *Done when:* `IA_Select` + `IMC_Battle` (in `Input/`) exist; the Player Controller adds the mapping context on start; left click prints "Select" (Print String) in PIE.
+- [ ] **T6 – Pick the Area under the cursor.** Which Area did I click?
+  *Done when:* clicking an Area prints *that* Area's name; clicking empty space prints nothing (or "none"); picking ignores things that aren't Areas.
+- [ ] **T7 – Highlight.** Show the selection.
+  *Done when:* the clicked Area changes look (material instance, e.g. `MI_Area_Highlighted`); only one Area is highlighted at a time; clicking empty space clears it; the Area owns *how* it looks highlighted (the controller only says "you're selected / not selected").
+
+**Next session starts with:** T2. User sketches a plan (a few bullets), Claude reviews it, then build.
+
+**Last finished:** M1-T1 Battle level & Game Mode ✅ (2026-10-14).
 
 #### Milestones
 
 | # | Milestone | Status | Playable result | UE concepts learned |
 |---|---|---|---|---|
 | M0 | **Setup** | ✅ 2026-10-14 | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
-| M1 | **The Board** | ⬜ | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
+| M1 | **The Board** | 🔄 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
 | M2 | **Pieces on the Board** | ⬜ | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
 | M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
@@ -182,6 +199,14 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Actor**: anything that can exist in the level: a hero, an Area, the camera. If you can place it in the world, it's an Actor.
 - **Component**: a piece you attach to an Actor to give it an ability, like a mesh (how it looks), collision (what it bumps into), or your own "Health" component. Actors are built *from* Components.
 - **Blueprint Class**: a reusable template. You make `BP_Area` once, then place it 10 times; each copy is an *instance*.
+- **Level**: one "world" file (`.umap`) you open and play in. Ours: `LVL_Battle_01`, the room where the fight happens.
+- **World Settings**: the settings panel of a whole level (not of one actor). Holds the **Game Mode override**: "this level uses this Game Mode instead of the project default".
+- **Pawn / Possess**: a Pawn is an Actor the player can *possess*, i.e. take control of. The Player Controller is "you", the Pawn is the body you steer. A Game Mode spawns its **Default Pawn Class** at the PlayerStart; GameModeBase defaults to `DefaultPawn` (a flying sphere), so set it to None if you don't want one.
+- **PlayerStart**: a marker saying where the player's Pawn spawns. It doesn't decide *what* spawns; the Game Mode does.
+- **Parent / Child class, Inherit**: a child Blueprint automatically gets (inherits) every setting and function of its parent. `BP_BattleGameMode` is a child of GameModeBase.
+- **Class Defaults**: the starting values of every variable and setting of a Blueprint, inherited ones included. Toolbar button in the Blueprint editor. Inherited settings live here, not in the graph.
+- **GameModeBase vs GameMode**: GameMode = GameModeBase + "match states" (waiting, in progress, over), mainly for multiplayer. We use GameModeBase.
+- **Redirector**: a hidden note left behind when you move an asset ("it moved over there"), so old links keep working. Clean up with right-click folder → Update Redirector References.
 - **Function vs Event**: both are "do this" blocks. A **Function** runs instantly and can return an answer ("what's the distance between these two Areas?"). An **Event** is a reaction to something happening ("when clicked…") and can't return an answer.
 - **Variable / Array / Struct / Enum**: a Variable is a labeled box holding one value (HP = 500). An Array is a list of boxes (all enemies in the room). A Struct is a bundle of different values that belong together (an ability's name + cost + damage range). An Enum is a fixed list of choices (Target: Closest / Furthest / Lowest HP).
 - **Game Mode / Game State**: Game Mode holds the *rules* of the match ("battle starts when…, you lose when…"). Game State holds the *current situation* everyone can read ("the clock is at 12.5s").

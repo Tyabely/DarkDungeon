@@ -25,3 +25,12 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - GitKraken asked for the upstream branch and pre-filled my username where the branch name (`main`) should go.
   - The first push uploaded the commits but none of the 418 LFS files, without any error. Fixed with `git lfs push --all origin` (it needed its own GitHub sign-in).
   - Lesson: "pushed" isn't "backed up" until the LFS files are checked too.
+
+**2026-10-14 · M1-T1 · Battle level & Game Mode**
+- **Learned:**
+  - A level picks its rules through the Game Mode override in World Settings; Project Settings → Maps & Modes picks which level opens.
+  - A child Blueprint inherits settings from its parent. Those settings live in **Class Defaults**, not in the graph.
+  - GameModeBase vs GameMode, and what a Pawn / Default Pawn Class is.
+- **Tripped up:**
+  - Pressing Play spawned a flying sphere although the new Game Mode's graph was empty. Cause: the inherited Default Pawn Class (`DefaultPawn`). Fixed by setting it to None.
+  - Saved both assets into `Board/` first; moved them to `Maps/` and `Core/` in the Content Browser.
