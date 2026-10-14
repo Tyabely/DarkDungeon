@@ -34,3 +34,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - Pressing Play spawned a flying sphere although the new Game Mode's graph was empty. Cause: the inherited Default Pawn Class (`DefaultPawn`). Fixed by setting it to None.
   - Saved both assets into `Board/` first; moved them to `Maps/` and `Core/` in the Content Browser.
+
+**2026-10-14 · M1-T2 · `BP_Area` actor**
+- **Learned:**
+  - The Construction Script runs in the editor, so an actor can rebuild itself every time you change a value in Details.
+  - Instance Editable gives each placed copy its own value; leaving it off keeps a value fixed for every copy.
+  - A plain Scene root + a mesh child lets you move the mesh's pivot: shift the mesh so its corner sits on the root.
+  - Size ≠ Scale: scale = size ÷ the mesh's size at scale 1 (the engine Cube is 100 cm).
+  - Relative vs World location: inside an actor you set things relative to the parent.
+  - Grouping X/Y/Z into one Vector cuts the wiring roughly in half.
+- **Tripped up:**
+  - Scaling alone moved the corner off the root. The offset has to grow with the size too (location = size × 0.5).
+  - First tried the Set *World* Location/Scale nodes; Relative was the right pair.
+  - Print String in the Construction Script showed nothing on screen. On-screen messages only appear in PIE; editor-time prints go to the Output Log.
+  - Started with sizes as meter multipliers, then switched to cm (UE's own unit).

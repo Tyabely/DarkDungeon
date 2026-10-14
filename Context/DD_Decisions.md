@@ -18,3 +18,6 @@ Claude adds an entry whenever a task you report as done involved a choice.
 | 11 | 2026-10-14 | M1 | `BP_BattleGameMode` based on **GameModeBase** | GameMode | Single-player; GameMode only adds multiplayer match states we don't need |
 | 12 | 2026-10-14 | M1 | Game Mode set as the **level's World Override**; project-wide default left on the template for now | Changing the project default | Keeps the template levels working as a cookbook. Revisit when the template is deleted (M8) |
 | 13 | 2026-10-14 | M1 | **Default Pawn Class = None** for now | Keeping `DefaultPawn` | No flying body in a board game. How the player looks at the board is decided in T4 |
+| 14 | 2026-10-14 | M1 | `BP_Area` = **Scene root + Cube child**, pivot at the **corner** | Mesh as root with center pivot | Corner pivot makes laying out the room easier (place Areas by their corner, control the gaps). Costs one extra line of math: the cube's offset grows with its size |
+| 15 | 2026-10-14 | M1 | Area sizes stored in **cm** (`SizeX`/`SizeY` floats) | Meters / "×100 cm" multipliers | cm is Unreal's own unit, so no hidden ×100 conversion; numbers match what the Details panel shows elsewhere |
+| 16 | 2026-10-14 | M1 | Thickness (`SizeZ` = 5 cm) **not Instance Editable** | Exposing it per Area | Every Area should be equally thick; one value in the Blueprint keeps it consistent |

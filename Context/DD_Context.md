@@ -123,7 +123,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 - [x] **T1 – Battle level & Game Mode.** ✅ 2026-10-14 Our own empty level and our own rules Blueprint, so we stop living inside the template's level.
   *Done when:* `LVL_Battle_01` (in `DarkDungeon/Maps/`) has floor + light; `BP_BattleGameMode` (in `Core/`) is the level's Game Mode override; Project Settings → Maps & Modes opens/plays `LVL_Battle_01` by default; PIE starts there with no template character running around.
-- [ ] **T2 – `BP_Area` actor.** One reusable rectangle that sizes itself.
+- [x] **T2 – `BP_Area` actor.** ✅ 2026-10-14 One reusable rectangle that sizes itself.
   *Done when:* `BP_Area` (in `Board/`) has a sensible component setup (root + visible mesh); an **Instance Editable** size variable drives the mesh size through the **Construction Script**; 2–3 copies in the level with different sizes, and changing the size in Details updates the viewport live.
 - [ ] **T3 – Lay out the room.** Hand-build the MVP room (GDO §3).
   *Done when:* 8–10 `BP_Area` instances of mixed sizes form one room (look of refs 1–5), small gaps between Areas, sensible labels in the Outliner (e.g. `Area_01`…), grouped in an Outliner folder.
@@ -136,9 +136,9 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T7 – Highlight.** Show the selection.
   *Done when:* the clicked Area changes look (material instance, e.g. `MI_Area_Highlighted`); only one Area is highlighted at a time; clicking empty space clears it; the Area owns *how* it looks highlighted (the controller only says "you're selected / not selected").
 
-**Next session starts with:** T2. User sketches a plan (a few bullets), Claude reviews it, then build.
+**Next session starts with:** T3. User sketches the room layout (rough Area sizes in cm and where they go), Claude reviews it, then build. Leftovers from T2 (optional): delete the Print String in `BP_Area`'s Construction Script; rename `VectorXYZ` / `SizeZ` to say what they mean.
 
-**Last finished:** M1-T1 Battle level & Game Mode ✅ (2026-10-14).
+**Last finished:** M1-T2 `BP_Area` actor ✅ (2026-10-14).
 
 #### Milestones
 
@@ -206,6 +206,15 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Parent / Child class, Inherit**: a child Blueprint automatically gets (inherits) every setting and function of its parent. `BP_BattleGameMode` is a child of GameModeBase.
 - **Class Defaults**: the starting values of every variable and setting of a Blueprint, inherited ones included. Toolbar button in the Blueprint editor. Inherited settings live here, not in the graph.
 - **GameModeBase vs GameMode**: GameMode = GameModeBase + "match states" (waiting, in progress, over), mainly for multiplayer. We use GameModeBase.
+- **Construction Script**: a second graph in every Actor Blueprint that runs *in the editor* whenever you place, move or edit the actor (BeginPlay only runs when the game starts). `BP_Area` uses it to resize itself live while you type a size.
+- **Instance Editable** (the eye icon): makes a variable show up in the Details panel of each placed copy, so every copy can have its own value. `SizeX`/`SizeY` are; `SizeZ` (thickness) isn't. Not the same as **Private**, which hides a variable from *other Blueprints*.
+- **Root component / Scene component**: the root is the top component everything else hangs under; move it and the rest follows. A **Scene component** is an empty one, just a point in space, often used as a clean root (like `DefaultSceneRoot` in `BP_Area`).
+- **Pivot**: the point a mesh rotates and scales around. The engine Cube's pivot is its center, which is why `BP_Area` shifts the cube by half its size to put the corner on the root.
+- **Relative vs World (location/scale)**: *World* = measured in the level's coordinates. *Relative* = measured from the parent component. Inside an actor's own setup you almost always want Relative.
+- **Scale vs Size**: Scale is a multiplier on the mesh's own size (scale 2 = twice as big). Size is the result in world units. Size = mesh size at scale 1 × Scale.
+- **Unreal unit (uu)**: 1 uu = 1 cm. Locations, mesh sizes and Details panel numbers are all in cm.
+- **Vector**: one value holding three numbers (X, Y, Z). Location and Scale are Vectors, so one Vector wire can replace three separate number wires.
+- **Magic number**: a raw number in a graph with no name explaining it (e.g. a bare `0.01`). Fine when obvious, but a named variable or a node comment saves future-you a puzzle.
 - **Redirector**: a hidden note left behind when you move an asset ("it moved over there"), so old links keep working. Clean up with right-click folder → Update Redirector References.
 - **Function vs Event**: both are "do this" blocks. A **Function** runs instantly and can return an answer ("what's the distance between these two Areas?"). An **Event** is a reaction to something happening ("when clicked…") and can't return an answer.
 - **Variable / Array / Struct / Enum**: a Variable is a labeled box holding one value (HP = 500). An Array is a list of boxes (all enemies in the room). A Struct is a bundle of different values that belong together (an ability's name + cost + damage range). An Enum is a fixed list of choices (Target: Closest / Furthest / Lowest HP).
