@@ -48,3 +48,13 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - First tried the Set *World* Location/Scale nodes; Relative was the right pair.
   - Print String in the Construction Script showed nothing on screen. On-screen messages only appear in PIE; editor-time prints go to the Output Log.
   - Started with sizes as meter multipliers, then switched to cm (UE's own unit).
+
+**2026-10-14 · M1-T3 · Lay out the room**
+- **Learned:**
+  - Scaling stretches whatever is *painted on* a mesh (textures, patterns). A plain colour can't stretch, so a border made of two plain cubes stays sharp at any size.
+  - A child component inherits its parent's scale. `TopCube` under `BottomCube` only needs "a bit smaller than my parent" (`(Size − 2 × Border) / Size`), not a size of its own.
+  - A Function can return two values at once (`GetInnerScale` gives X and Y).
+  - Outliner folders and actor labels keep the level readable; they don't affect the game.
+- **Tripped up:**
+  - Rotating Areas by ±90° made `SizeX` point along world Y and moved the corner they grow from to another side, so placement was hard to reason about. Fixed: all rotations 0, sizes swapped instead.
+  - Started the task in the wrong Claude session; the work was fine, just checked again here.

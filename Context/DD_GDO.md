@@ -38,7 +38,8 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - **Distance / Range** = number of Area steps between two Areas (graph distance, not world distance).
 - Units stand *in* an Area, not on a grid tile. Abilities target an **Area** (and pick unit(s) inside it).
 - **No stances.** Abilities only check range; positioning on the board does the rest. ✅
-- MVP: one hand-built room (~8–10 Areas). Procedural generation later, but the data shape (Areas + adjacency) is designed now so generation can plug in. ✅
+- Areas **touch edge to edge**; each draws a thin dark border so the rectangles read clearly. Gaps only where they shape the room. ✅
+- MVP: one hand-built room (~8–10 Areas). Built in M1-T3: 9 Areas, symmetric (see Decisions #21). Procedural generation later, but the data shape (Areas + adjacency) is designed now so generation can plug in. ✅
 - ❓ High/Low Ground, MVP or later?
 
 ### 4. The Time System (core identity)
