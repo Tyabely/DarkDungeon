@@ -87,19 +87,28 @@ Setup plan (M0 task, done by you):
 4. In Claude Code: `/plugin install unreal-engine-skills-for-claude-code@claude-plugins-official` (if the marketplace is missing, add `anthropics/claude-plugins-official` first). The hook needs bash on PATH; Git for Windows covers that.
 5. Claude Code runs from the **repo root** (`F:\P_UE5\DarkDungeon`) so it sees both the docs and the project. The editor generates `.mcp.json` inside `DarkDungeon_Project\`; move or copy it to the repo root (it only holds the local server address). Verify with `/mcp`.
 6. First real check: ask me to list the toolsets (`list_toolsets` / `describe_toolset`) and see **whether a Blueprint graph read tool exists**. If it doesn't, Ctrl+C node paste stays the main BP review channel. Add a third-party reader only if that gets painful.
+   → **Done 2026-10-14:** ~50 toolsets / ~830 functions. A Blueprint graph reader exists: `BlueprintTools.read_graph_dsl` returns a graph as text. Ctrl+C paste stays as the fallback.
 
 Rules of use:
 - I only call **read/inspect** tools: list assets/actors, read properties, read logs, describe graphs.
 - I never call create/modify/delete tools, and never `execute_tool_script` (it runs arbitrary Python).
-- Enforce it, don't just trust it: once we know the tool names, add the write tools to the `deny` list in `.claude/settings.json`. That's also a small Claude Code config lesson.
+- Enforce it, don't just trust it. ✅ Done with a **hook** rather than a `deny` list. All ~830 editor functions go through one Claude Code tool (`call_tool`), and deny rules can only see tool names, so they can't tell a read from a write. The hook (`.claude/hooks/unreal-mcp-guard.js`) checks each function name and only lets reads through. A second hook blocks shell commands that would talk to the editor's port 8000 directly. See `DD_Decisions.md`.
 - Commit before sessions where I inspect via MCP (experimental plugin = keep a rollback point).
 
 **Living docs:**
-- `DD_Context.md` — this file: how we work, learner profile, roadmap.
+- `CLAUDE.md` (repo root) — short briefing Claude Code loads automatically at the start of every session: roles, where the docs are, and the session protocol.
+- `DD_Context.md` — this file: how we work, learner profile, roadmap + **Current focus** (§4).
 - `DD_GDO.md` — game design. Expected to change; changes are cheap.
 - `DD_Conventions.md` — folders, naming, Blueprint style, Git rules. Quick reference.
-- `DD_LearningLog.md` *(to create)* — date · what I learned · what tripped me up. Short.
-- `DD_Decisions.md` *(to create)* — lightweight decision records: "Decided X over Y because Z". Shows engineering thinking in a portfolio.
+- `DD_LearningLog.md` — date · what I learned · what tripped me up. Short.
+- `DD_Decisions.md` — lightweight decision records: "Decided X over Y because Z". Shows engineering thinking in a portfolio.
+
+**Sessions & doc upkeep:**
+- **One task per session.** Name the session after it (e.g. "M1-T3 mouse picking").
+- **You say "done"; Claude checks it, then updates the docs.** The steps are in `CLAUDE.md`: verify the "done when" criteria, then tick Current focus and add the Learning Log, Decisions and Glossary entries. You never have to ask "update the file".
+- **"Wrap up"** ends a session mid-task. Progress gets recorded and a "next session starts with…" note is left.
+- Then you commit (Claude suggests the message) and push.
+- Prefer a new session over `/compact` at task boundaries. Mid-task, `/compact` with a note on what to keep.
 
 ---
 
@@ -107,17 +116,35 @@ Rules of use:
 
 Each milestone has a playable result and a set of UE concepts it teaches. Order is chosen so each step builds on the previous one.
 
-| # | Milestone | Playable result | UE concepts learned |
-|---|---|---|---|
-| M0 | **Setup** | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
-| M1 | **The Board** | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
-| M2 | **Pieces on the Board** | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
-| M3 | **Data-driven Units** | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
-| M4 | **The Time System** | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
-| M5 | **Abilities** | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events) |
-| M6 | **Enemy AI** | Enemies telegraph & execute intents ("3.5 ⏳ Move + Attack") | Simple decision logic in BP (no Behavior Trees needed), reuse of the ability system |
-| M7 | **Win / Lose & Loop** | Battle ends, restart / next battle | Level/state flow, Game Instance, basic save data |
-| M8 | **Portfolio pass** | Short trailer/GIF, readme, docs cleanup | Sequencer basics (optional), packaging a build |
+#### ▶ Current focus
+*Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
+
+**M0 – Setup** · done when: the repo is on GitHub (private), the latest commit is pushed, and `.uasset` files show up there as LFS files.
+- [x] A. UE 5.8 project created (Top Down Strategy template)
+- [x] B. Git + LFS set up locally
+- [x] C. Folder structure & naming conventions (`DD_Conventions.md`)
+- [x] D. Unreal MCP connected, tools audited, read-only enforced by a hook (`.claude/`)
+- [x] E. `CLAUDE.md` + Learning Log + Decisions docs; status tracking in this block
+- [ ] F. Remove the duplicate `DarkDungeon_Project/.mcp.json` from the repo (the root `.mcp.json` is the one in use)
+- [ ] G. GitHub remote: check GitHub's free LFS quota → create a private repo with GitHub Desktop → first push
+
+**Next:** M1 – The Board. Claude writes its task list (brief + "done when" for each task) when M1 starts.
+
+#### Milestones
+
+| # | Milestone | Status | Playable result | UE concepts learned |
+|---|---|---|---|---|
+| M0 | **Setup** | 🔄 in progress | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
+| M1 | **The Board** | ⬜ | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
+| M2 | **Pieces on the Board** | ⬜ | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
+| M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
+| M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
+| M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events) |
+| M6 | **Enemy AI** | ⬜ | Enemies telegraph & execute intents ("3.5 ⏳ Move + Attack") | Simple decision logic in BP (no Behavior Trees needed), reuse of the ability system |
+| M7 | **Win / Lose & Loop** | ⬜ | Battle ends, restart / next battle | Level/state flow, Game Instance, basic save data |
+| M8 | **Portfolio pass** | ⬜ | Short trailer/GIF, readme, docs cleanup | Sequencer basics (optional), packaging a build |
+
+Status: ⬜ not started · 🔄 in progress · ✅ done (checked by Claude)
 
 Stretch / post-MVP learning tracks: procedural map generation, Common UI, animation & VFX, Enhanced Input deep-dive, profiling (Insights). C++ and GAS are out of scope by decision (GAS effectively needs C++ for Attribute Sets).
 
@@ -144,6 +171,16 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **MCP** (Model Context Protocol): a standard "plug" that lets Claude talk to another program. Here it lets me *look into* your open editor (list assets, read settings) without you sending screenshots.
 - **PIE** (Play In Editor): pressing Play inside the editor to test the game.
 - **Copy-pasted nodes (T3D text)**: when you select Blueprint nodes and press Ctrl+C, UE copies them as text. Paste that text to me and I can read exactly what you built.
+- **Remote** (usually named `origin`): a second copy of your repo on another computer, here GitHub's servers. It's your backup and your portfolio page.
+- **Push / Pull / Clone**: *push* sends your new commits up to the remote. *Pull* brings commits down from it. *Clone* downloads a whole repo, history included, onto a new PC.
+
+**Claude Code**
+- **Session**: one conversation with Claude. It forgets everything when it ends, so anything worth keeping goes into the docs. One task per session.
+- **Context (window)**: everything Claude can "see" in the current session: messages, files read, tool results. It has a size limit. When it fills up, older details fade.
+- **`/compact`**: replaces the conversation so far with a summary to free up context. Small details get lost. **`/clear`** wipes the conversation completely.
+- **`CLAUDE.md`**: a briefing file Claude Code reads automatically at the start of every session in this folder.
+- **Hook**: a small script Claude Code runs automatically at a set moment, e.g. *before* a tool is used. Ours checks every Unreal MCP call and blocks anything that isn't a read.
+- **Allowlist vs denylist**: an allowlist names what's permitted and blocks everything else (safe by default). A denylist names what's forbidden and permits everything else (anything new slips through). The MCP guard uses an allowlist.
 
 **Unreal building blocks**
 - **Actor**: anything that can exist in the level: a hero, an Area, the camera. If you can place it in the world, it's an Actor.
