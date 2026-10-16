@@ -97,3 +97,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Clicking the floor printed the last clicked Area. The Cast Failed path never reached a Return Node, so the caller's output pin kept its old value. Making the variable local, removing it, or toggling Pure didn't help, because none of them was the cause. Fixed with a second Return Node on Cast Failed.
   - Get Display Name on an empty reference gave a blank message, which looked like "maybe it works".
   - Questioned why Is Valid is needed when the output is typed `BP_Area` (type ≠ "something is there"), and whether the check is duplicated (the cast asks "is it an Area?", Is Valid asks "did I get one?"). A bool `Found` output would be an equally valid alternative.
+
+**2026-10-16 · M1-T7 · Highlight**
+- **Learned:**
+  - Material vs Material Instance: the material holds the graph and its *parameters*; an MI only changes parameter values and reuses the parent's shaders. A parameter in an MI stays greyed out until its **override checkbox** is ticked.
+  - What's expensive is *compiling* new materials, not swapping already-made ones at runtime. M → MI → M costs the same as MI → MI; MI → MI is a tidiness convention (the master stays untouched).
+  - A Cast doesn't pick *which* Area. The object reference coming out of `GetAreaUnderCursor` already *is* that one Area (`Area_7`); the cast only checks the type.
+  - Split of responsibility: the Area owns *how* it looks (`SetHighlighted`), the controller owns *which one* is selected, because "only one at a time" is a rule across all Areas.
+  - Order matters: turn the old one off **before** turning the new one on, or re-clicking the same Area turns it off again.
+- **Tripped up:**
+  - Built the Lerp + parameters in the material, then the MI "wouldn't let me change it": the override checkbox wasn't ticked.
+  - In the plan, asked how the engine knows the clicked Area is `_7` and not `_5` when you "cast to the BP". The reference carries that; the class doesn't.
+  - Proposed Areas listening for clicks, and called Interfaces a broadcaster/listener tool (that's an Event Dispatcher; an Interface is a shared message). Neither was needed: the controller already knows the one Area to talk to.
+  - First working version used `PreviouslyHitArea` + `MostRecentlyHitArea` and turned the new Area on *before* the old one off, so clicking an Area, then empty space, then the same Area left it dark. Fixed by reordering to off → set → on with one variable.
+  - Used Cast To BP_Area on variables already typed `BP_Area`, as an "is it empty?" check. Works, but Is Valid says what's meant (cleanup noted in Current focus).

@@ -119,37 +119,37 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M1 – The Board** · 🔄 started 2026-10-14. Goal: a fixed room of rectangle Areas seen from a top-down camera; click an Area to highlight it.
+**M2 – Pieces on the Board** · ⬜ next. Goal: 2 hero placeholders + 2 enemy placeholders stand in Areas, and an Area never holds more units than its capacity.
+*(Draft task list, written when M1 closed. Change it freely in the first M2 session.)*
 
-- [x] **T1 – Battle level & Game Mode.** ✅ 2026-10-14 Our own empty level and our own rules Blueprint, so we stop living inside the template's level.
-  *Done when:* `LVL_Battle_01` (in `DarkDungeon/Maps/`) has floor + light; `BP_BattleGameMode` (in `Core/`) is the level's Game Mode override; Project Settings → Maps & Modes opens/plays `LVL_Battle_01` by default; PIE starts there with no template character running around.
-- [x] **T2 – `BP_Area` actor.** ✅ 2026-10-14 One reusable rectangle that sizes itself.
-  *Done when:* `BP_Area` (in `Board/`) has a sensible component setup (root + visible mesh); an **Instance Editable** size variable drives the mesh size through the **Construction Script**; 2–3 copies in the level with different sizes, and changing the size in Details updates the viewport live.
-- [x] **T3 – Lay out the room.** ✅ 2026-10-14 Hand-build the MVP room (GDO §3).
-  *Done when:* 8–10 `BP_Area` instances of mixed sizes form one room (look of refs 1–5); Areas touch edge to edge (gaps only where wanted for the shape), each with a border of constant width at any size; sensible labels in the Outliner (e.g. `Area_01`…), grouped in an Outliner folder.
-  *(Changed during the task: "small gaps between Areas" became "touching Areas + border", see Decisions #17.)*
-- [x] **T4 – Top-down camera & Player Controller.** ✅ 2026-10-14 See the whole board when you press Play, mouse cursor visible.
-  *Done when:* `BP_BattlePlayerController` (in `Core/`) is set in the Game Mode; on PIE the view is a fixed top-down (slightly angled is fine) shot of the whole room; mouse cursor is visible; no pawn wandering around.
-  *(Built as: `BattleCamera` Camera Actor in the level, (385, −140, 600), Pitch −55 / Yaw 90; the controller finds it on BeginPlay → Is Valid → Set View Target with Blend. See Decisions #22–#25.)*
-- [x] **T5 – Click input.** ✅ 2026-10-14 A click becomes a game command.
-  *Done when:* `IA_Select` + `IMC_Battle` (in `Input/`) exist; the Player Controller adds the mapping context on start; left click prints "Select" (Print String) in PIE.
-  *(Built as: `IA_Select` Digital (bool), no triggers; `IMC_Battle` maps Left Mouse Button → `IA_Select`; BeginPlay → Get Enhanced Input Local Player Subsystem → Add Mapping Context (priority 0), then the camera logic; `IA_Select` **Started** → Print String "LMB pressed!". See Decisions #26–#27.)*
-- [x] **T6 – Pick the Area under the cursor.** ✅ 2026-10-15 Which Area did I click?
-  *Done when:* clicking an Area prints *that* Area's name; clicking empty space prints nothing (or "none"); picking ignores things that aren't Areas.
-  *(Built as: function `GetAreaUnderCursor` (impure) on the controller: Get Hit Result Under Cursor by Channel (Visibility) → Break Hit Result → Cast To BP_Area → success returns `As BP_Area`, Cast Failed returns an empty reference through a second Return Node; output type `BP_Area`. `IA_Select` **Started** → `GetAreaUnderCursor` → Is Valid → "Hit:" + Get Display Name / "none". See Decisions #28–#31.)*
-- [ ] **T7 – Highlight.** Show the selection.
-  *Done when:* the clicked Area changes look (material instance, e.g. `MI_Area_Highlighted`); only one Area is highlighted at a time; clicking empty space clears it; the Area owns *how* it looks highlighted (the controller only says "you're selected / not selected").
+- [ ] **T1 – Area data.** Each Area knows how many units fit and whether it's a spawn spot.
+  *Done when:* `BP_Area` has an Instance Editable integer `Capacity` and an Instance Editable **enum** `SpawnSide` (`E_SpawnSide`: None / Hero / Enemy, in `Board/`); every Area in the room has sensible values (GDO §3), with at least 2 Hero and 2 Enemy spawn slots in total.
+- [ ] **T2 – `BP_Unit` placeholder.** One reusable "piece".
+  *Done when:* `BP_Unit` (new `Units/` folder) has a simple visible mesh, an Instance Editable `Team` enum (`E_Team`: Hero / Enemy) that changes its colour (Construction Script), and a `CurrentArea` (`BP_Area` reference) variable; a hero and an enemy placed by hand look different.
+- [ ] **T3 – Spawn at battle start.** The Game Mode deploys the pieces.
+  *Done when:* on BeginPlay, `BP_BattleGameMode` finds the spawn Areas and uses **Spawn Actor from Class** to create 2 heroes in Hero Areas and 2 enemies in Enemy Areas; nothing is placed by hand any more; each unit's `CurrentArea` is set.
+- [ ] **T4 – Occupancy & capacity.** Areas know who stands in them.
+  *Done when:* `BP_Area` keeps an **array** of the units in it, with functions to add/remove a unit that refuse when it's full (returns success yes/no); units in the same Area stand side by side, not inside each other; trying to over-fill an Area prints a clear message.
+- [ ] **T5 – Neighbours.** Which Areas share an edge (GDO §3).
+  *Done when:* each `BP_Area` has an array of neighbour Areas (filled by hand in the level, or worked out from positions; your choice, recorded as a Decision); selecting an Area also tints its neighbours in a second look, so you can check the map by clicking.
+- [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
+  *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
 
-**Next session starts with:** T7. User sketches the plan: what should the Area own (a "set highlighted yes/no" function that swaps the top cube's material), and what should the controller remember so only one Area is highlighted at a time (hint: a variable holding the currently selected Area). The Is Not Valid branch from T6 is where "clear the selection" goes. Small T6 nits (optional): the Append's "Hit:" has no trailing space (prints `Hit:Area_9`); the function's output pin is still named `HitActor`, and `Area` would say what it holds. Leftovers (optional): from T3, labels skip `Area_3` and aren't zero-padded (`Area_10` sorts right after `Area_1`), and `TopCube`'s Relative Location Z = 100 has no note explaining it; from T4, the camera's X (385) is ~65 cm off the room's centre (~320), and the near row of Areas sits close to the bottom edge of the frame.
+**Next session starts with:** M2-T1. Before it, the small T7 cleanup (optional, ~10 min, recommended before T5/T6 lean on the selection):
+- The Is Not Valid branch turns the old Area off but doesn't empty `MostRecentlyHitArea`, so after clicking empty space the controller still "remembers" an Area nothing shows as selected. Harmless now; wrong as soon as anything asks "what's selected?". Clear it there, and rename the variable to `SelectedArea`, which is then exactly what it holds.
+- The three Cast To BP_Area nodes on `BP_Area`-typed variables only act as "is it empty?" checks. Use Is Valid / a Validated Get.
+- Names per Conventions: `MI_HighlightedInner` → `MI_Area_Highlighted`, `M_WhiteInner` → `M_Area` (or add `MI_Area_Default` and swap MI ↔ MI), `IsHIghlighted` → `bIsHighlighted`.
 
-**Last finished:** M1-T6 Pick the Area under the cursor ✅ (2026-10-15).
+Older optional leftovers: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, labels skip `Area_3` and aren't zero-padded, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
+
+**Last finished:** M1-T7 Highlight ✅ (2026-10-16), which closes **M1 – The Board** ✅. M1's task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#35.
 
 #### Milestones
 
 | # | Milestone | Status | Playable result | UE concepts learned |
 |---|---|---|---|---|
 | M0 | **Setup** | ✅ 2026-10-14 | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
-| M1 | **The Board** | 🔄 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
+| M1 | **The Board** | ✅ 2026-10-16 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
 | M2 | **Pieces on the Board** | ⬜ | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
 | M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
@@ -260,6 +260,17 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Data Asset / Data Table**: files that hold *data only*, no logic. E.g. "Warrior: HP 1100, abilities Slash/Cleave/…". Changing a number means editing data, not rewiring Blueprints.
 - **Gameplay Tag**: a label like `Status.Bleed` or `Ability.Warrior.Charge`, organized in a tree. Safer than typing text by hand, because a typo can't create a "new" tag by accident.
 - **UMG** (Unreal Motion Graphics): Unreal's tool for building UI: buttons, health bars, the timeline.
+- **Class vs instance vs reference**: the class `BP_Area` is the house plan; `Area_7` in the level is one house built from it (an instance); an object reference is that house's street address. A Cast never *chooses* which house. It only checks that the address you already hold is a `BP_Area` house.
+- **Material (`M_`)**: the recipe for how a surface looks (colour, shine, roughness), built as a node graph that ends in outputs like Base Color. `M_WhiteInner` colours the Areas' `TopCube`.
+- **Shader / shader compile**: a shader is the small program the graphics card runs to draw a material. Every new *Material* has to be compiled into shaders, which is slow (the "Compiling Shaders" counter). That's the expensive part, not swapping materials at runtime.
+- **Material Parameter (Scalar / Vector)**: a named value inside a material that can be changed *without* editing its graph. Scalar = one number (`ColorScaling`), Vector = a colour or three numbers (`ColorRegular`, `ColorHighlight`).
+- **Material Instance (`MI_`)**: a copy of a material that changes only parameter values. It reuses the parent's shaders, so it costs almost nothing to make. `MI_HighlightedInner` = `M_WhiteInner` with `ColorScaling` = 1.
+- **Override (in a Material Instance)**: the checkbox next to each parameter. Unticked (greyed out) = "use the parent's value"; ticked = "this instance uses its own value". Every parameter starts unticked, which is why a fresh MI seems to refuse edits.
+- **Lerp (Linear Interpolate)**: blends between A and B by Alpha: 0 = all A, 1 = all B, 0.5 = halfway. `M_WhiteInner` lerps white → blue by `ColorScaling`, so a highlight could later *fade in* by animating Alpha.
+- **Set Material**: a node that puts a different material on one slot (Element Index) of a mesh component at runtime. `SetHighlighted` uses it on `TopCube`.
+- **Dynamic Material Instance**: a Material Instance created *while the game runs*, so you can change its parameters live (e.g. fade `ColorScaling` 0 → 1). The alternative to swapping between ready-made MIs; not used yet.
+- **Reroute node**: a dot on a wire that only bends it, to keep a graph readable. Does nothing to the logic. Double-click a wire to add one.
+- **Validated Get**: right-click a variable getter → *Convert to Validated Get*. The getter gets Is Valid / Is Not Valid exits built in, which is shorter than a separate Is Valid node.
 
 **Our game's terms**
 - **Area**: one rectangle of the board. It has a capacity (how many units fit) and neighbors (rectangles sharing an edge).

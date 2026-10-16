@@ -39,6 +39,7 @@ Repo root = this folder. Unreal project = `DarkDungeon_Project\`. Docs = `Contex
 
 ## Tooling rules
 - Unreal MCP is **read-only**. A PreToolUse hook enforces it (`.claude/hooks/unreal-mcp-guard.js`). Never try to get around it, and never send requests to port 8000 directly.
+- MCP reads mark the inspected Blueprint as unsaved (dirty) in the editor. That's a side effect of reading, not the user's edits: don't remind them to save because of it.
 - Remind the user to commit before sessions that inspect the editor through MCP (it's an experimental plugin, so keep a rollback point).
 - When the user reports a push, verify it: `git fetch` and confirm `main` = `origin/main`, then run `node .claude/scripts/check-lfs-remote.js` (exit 0 = every LFS file reached GitHub). A push can upload the commits but skip the LFS files without any error.
 - `.uasset` files are binary: read Blueprints through MCP `read_graph_dsl` or pasted nodes, never from disk.
