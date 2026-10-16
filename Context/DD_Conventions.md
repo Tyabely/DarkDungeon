@@ -13,6 +13,7 @@ Content/
 ├── DarkDungeon/        ← everything we make
 │   ├── Core/           game-wide setup: Game Mode, Player Controller, camera
 │   ├── Board/          Areas and room layouts
+│   ├── Units/          what heroes and enemies share: BP_Unit, E_Team, unit materials
 │   ├── Combat/         battle clock, turn flow, base for all abilities
 │   ├── Heroes/         one subfolder per hero: Warrior/, Archer/ (its data + abilities)
 │   ├── Enemies/        one subfolder per enemy: Ghoul/, Cultist/

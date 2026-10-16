@@ -128,3 +128,13 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Wasn't sure the enum was built right (it was: None / Hero / Enemy, in that order).
   - Asked whether spawn sides need marking separately. The `SpawnSide` value set on each Area *is* the marking.
   - Tooling: the Unreal MCP connection dropped after the editor's server restarted. Restarting the server isn't enough; the Claude session has to reconnect (or start fresh).
+
+**2026-10-16 · M2-T2 · `BP_Unit` placeholder**
+- **Learned:**
+  - A second enum (`E_Team`: Hero / Enemy) for a different job than `E_SpawnSide`. A *place* can be "None"; a *piece* always has a side, so `E_Team` has no None.
+  - **Switch on Enum** in the Construction Script: one exit per value, each one sets a different material. Changing `Team` in Details recolours the piece straight away.
+  - Reused the M1 material pattern for units: a parent material plus a Material Instance with `ColorScaling` overridden (Decisions #32/#33).
+  - A variable can hold a **reference to another actor** (`CurrentArea`, type `BP_Area`). It stays empty (None) until T3 fills it.
+  - **Pivot at the feet:** the 60×60×180 cube is lifted by 90 cm inside the Blueprint, so the actor's origin sits on the floor. Spawning at an Area's location in T3 will stand the unit *on* the Area, not half inside it.
+  - Placeholder size drove a level change: corner and side Areas were enlarged so their capacity fits 60 cm units.
+- **Tripped up:** none reported.

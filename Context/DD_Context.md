@@ -123,8 +123,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 *(Draft task list, written when M1 closed. Change it freely as M2 goes.)*
 
 - [x] **T1 – Area data.** ✅ 2026-10-16. Built as: `E_SpawnSide` (None / Hero / Enemy) in `Board/`; `BP_Area` has `Capacity` + `SpawnSide`, both Instance Editable. Areas renamed so `Area_1`…`Area_9` run left→right, top→bottom. Capacity by size: corners 2, side Areas 3, centre column 4. Enemy = `Area_1`/`4`/`7` (left column, 7 slots), Hero = `Area_3`/`9` (right corners, 4 slots). Decisions #37–#39.
-- [ ] **T2 – `BP_Unit` placeholder.** One reusable "piece".
-  *Done when:* `BP_Unit` (new `Units/` folder) has a simple visible mesh, an Instance Editable `Team` enum (`E_Team`: Hero / Enemy) that changes its colour (Construction Script), and a `CurrentArea` (`BP_Area` reference) variable; a hero and an enemy placed by hand look different.
+- [x] **T2 – `BP_Unit` placeholder.** ✅ 2026-10-16. Built as: `BP_Unit` + `E_Team` (Hero / Enemy) in `Units/`; mesh = engine Cube scaled 60×60×180, origin at the feet. Construction Script: Switch on `Team` → Set Material `M_HeroUnit` / `MI_EnemyUnit`. `CurrentArea` (`BP_Area` ref) is still None. Corner Areas enlarged to 180×180, side Areas to 200×250. Decisions #40–#42. The two hand-placed test units get deleted in T3.
 - [ ] **T3 – Spawn at battle start.** The Game Mode deploys the pieces.
   *Done when:* on BeginPlay, `BP_BattleGameMode` finds the spawn Areas and uses **Spawn Actor from Class** to create 2 heroes in Hero Areas and 2 enemies in Enemy Areas; nothing is placed by hand any more; each unit's `CurrentArea` is set.
 - [ ] **T4 – Occupancy & capacity.** Areas know who stands in them.
@@ -134,11 +133,13 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
   *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
 
-**Next:** M2-T2 – `BP_Unit` placeholder. (The M1 `IA_Select` Triggered → Started fix is done.)
+**Next:** M2-T3 – Spawn at battle start.
+
+Optional leftovers from M2-T2: rename the unit materials so the names tell the truth (`M_HeroUnit` is also the enemy's parent; e.g. `M_Unit` + `MI_Unit_Enemy`); delete the 3 unused default events in `BP_Unit`'s Event Graph; `MI_EnemyUnit` has `RefractionDepthBias` ticked as an override for no reason; `Input/Test.uasset` (from M1-T5) looks like a leftover.
 
 Older optional leftovers from M1: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
 
-**Last finished:** M2-T1 Area data ✅ (2026-10-16). **M1 – The Board** ✅ closed the same day; its task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
+**Last finished:** M2-T2 `BP_Unit` placeholder ✅ (2026-10-16). Before it: M2-T1 Area data ✅. **M1 – The Board** ✅ closed the same day; its task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
 
 #### Milestones
 
@@ -268,6 +269,9 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Dynamic Material Instance**: a Material Instance created *while the game runs*, so you can change its parameters live (e.g. fade `ColorScaling` 0 → 1). The alternative to swapping between ready-made MIs; not used yet.
 - **Reroute node**: a dot on a wire that only bends it, to keep a graph readable. Does nothing to the logic. Double-click a wire to add one.
 - **Validated Get**: right-click a variable getter → *Convert to Validated Get*. The getter gets Is Valid / Is Not Valid exits built in, which is shorter than a separate Is Valid node.
+- **Switch on (Enum)**: a flow node with one exit per enum value; execution leaves through the exit that matches. `BP_Unit`'s Construction Script uses Switch on `E_Team`: the Hero exit sets the hero material, the Enemy exit sets the enemy one. (**Select** is the data version: it picks one of several *values* instead of one of several exits.)
+- **Object reference variable**: a variable whose type is a class (e.g. `BP_Area`) and whose value is the "street address" of one actor of that class, or **None** while empty. `BP_Unit.CurrentArea` holds the Area the unit stands in.
+- **Pivot / actor origin**: the point an actor's location refers to. Where it sits inside the mesh matters: `BP_Unit`'s cube is lifted 90 cm so the origin is at its feet, and "place at this spot" stands it *on* the floor instead of half inside it.
 
 **Our game's terms**
 - **Area**: one rectangle of the board. It has a capacity (how many units fit) and neighbors (rectangles sharing an edge).
