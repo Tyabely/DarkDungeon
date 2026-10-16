@@ -138,3 +138,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - **Pivot at the feet:** the 60×60×180 cube is lifted by 90 cm inside the Blueprint, so the actor's origin sits on the floor. Spawning at an Area's location in T3 will stand the unit *on* the Area, not half inside it.
   - Placeholder size drove a level change: corner and side Areas were enlarged so their capacity fits 60 cm units.
 - **Tripped up:** none reported.
+
+**2026-10-16 · M2-T3 · Spawn at battle start**
+- **Learned:**
+  - **Get All Actors Of Class** returns an **array** sized by whatever it finds; you don't create the slots. To work on each item you loop with **For Each Loop**, whose Array Element is "the current item".
+  - The array is already typed (`BP_Area`), and so is Spawn Actor's Return Value (`BP_Unit`). A Cast on them is redundant, which is what the blue **NOTE** bar on a cast means.
+  - **Switch on Enum** for flow: one exit per `SpawnSide`, None left unconnected, instead of Branches plus `==` nodes.
+  - **The Construction Script runs inside Spawn Actor from Class.** Setting `Team` after the spawn came too late for the colour. **Expose on Spawn** puts the variable on the Spawn node, so the value is there before construction. Same fix for `CurrentArea`, which also removed the long wires.
+  - Rule kept: if a value is part of what the actor *is* when it's created, give it to the Spawn node.
+  - **Switch vs Select**: Switch picks which *exec path* runs; Select picks which *value* comes out. Both exits of the Switch go into one Spawn node, and a Select on `SpawnSide` turns the side into a `Team`. A Select's Index pin takes its type from the first wire connected to it.
+- **Tripped up:**
+  - Getting one value out of an array (tried casting the whole array) until For Each clicked.
+  - Thought the colour issue could only be fixed by moving the logic to the Event Graph. It worked, but only because spawn and SET happen in the same frame; Expose on Spawn is the real fix.
+  - First Select attempt used **Array Index** (the item's position in the list) instead of **Spawn Side**, which turned its Index into an Integer. A fresh Select wired to Spawn Side first showed the None / Hero / Enemy options.
+  - Tooling: the MCP connection dropped mid-session again and only came back after restarting the Claude app. Logs on both sides show no error.

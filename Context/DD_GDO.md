@@ -36,6 +36,7 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - A room is made of **Areas**, rectangles of different sizes. ✅
 - Each Area has: **capacity** (the pips in refs: how many units fit; scales with size, 2–4 in the MVP room), **neighbors** (shared edge = adjacent), and a **spawn side** (None / Hero / Enemy). ✅ Other tags (e.g. High Ground) are post-MVP.
 - MVP room spawns: enemies in the left column (7 slots, room for groups of 3–4), heroes in the two right corners (4 slots). 🟡 Revisit after the first spawn playtest.
+- First level (`LVL_Battle_01`): **2 heroes vs 3 enemies**, one unit per spawn Area. ✅ Spawned by the Game Mode at battle start.
 - **Distance / Range** = number of Area steps between two Areas (graph distance, not world distance).
 - Units stand *in* an Area, not on a grid tile. Abilities target an **Area** (and pick unit(s) inside it).
 - **No stances.** Abilities only check range; positioning on the board does the rest. ✅

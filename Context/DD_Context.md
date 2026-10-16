@@ -119,13 +119,12 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M2 – Pieces on the Board** · 🔄 in progress. Goal: 2 hero placeholders + 2 enemy placeholders stand in Areas, and an Area never holds more units than its capacity.
+**M2 – Pieces on the Board** · 🔄 in progress. Goal: 2 hero placeholders + 3 enemy placeholders stand in Areas (Decisions #43), and an Area never holds more units than its capacity.
 *(Draft task list, written when M1 closed. Change it freely as M2 goes.)*
 
 - [x] **T1 – Area data.** ✅ 2026-10-16. Built as: `E_SpawnSide` (None / Hero / Enemy) in `Board/`; `BP_Area` has `Capacity` + `SpawnSide`, both Instance Editable. Areas renamed so `Area_1`…`Area_9` run left→right, top→bottom. Capacity by size: corners 2, side Areas 3, centre column 4. Enemy = `Area_1`/`4`/`7` (left column, 7 slots), Hero = `Area_3`/`9` (right corners, 4 slots). Decisions #37–#39.
 - [x] **T2 – `BP_Unit` placeholder.** ✅ 2026-10-16. Built as: `BP_Unit` + `E_Team` (Hero / Enemy) in `Units/`; mesh = engine Cube scaled 60×60×180, origin at the feet. Construction Script: Switch on `Team` → Set Material `M_HeroUnit` / `MI_EnemyUnit`. `CurrentArea` (`BP_Area` ref) is still None. Corner Areas enlarged to 180×180, side Areas to 200×250. Decisions #40–#42. The two hand-placed test units get deleted in T3.
-- [ ] **T3 – Spawn at battle start.** The Game Mode deploys the pieces.
-  *Done when:* on BeginPlay, `BP_BattleGameMode` finds the spawn Areas and uses **Spawn Actor from Class** to create 2 heroes in Hero Areas and 2 enemies in Enemy Areas; nothing is placed by hand any more; each unit's `CurrentArea` is set.
+- [x] **T3 – Spawn at battle start.** ✅ 2026-10-16. Built as: `BP_BattleGameMode` BeginPlay → Get All Actors Of Class (`BP_Area`) → `Areas` → For Each → Switch on `E_SpawnSide` (Hero and Enemy exits both feed **one** Spawn Actor `BP_Unit` at the Area's `TopCube`) → one unit per spawn Area (2 heroes, 3 enemies); a **Select** on `SpawnSide` gives the `Team`. `Team` and `CurrentArea` are Expose on Spawn; colour = `SwitchTeam` function in the Construction Script. No units placed in the level. Decisions #43–#46.
 - [ ] **T4 – Occupancy & capacity.** Areas know who stands in them.
   *Done when:* `BP_Area` keeps an **array** of the units in it, with functions to add/remove a unit that refuse when it's full (returns success yes/no); units in the same Area stand side by side, not inside each other; trying to over-fill an Area prints a clear message.
 - [ ] **T5 – Neighbours.** Which Areas share an edge (GDO §3).
@@ -133,13 +132,15 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
   *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
 
-**Next:** M2-T3 – Spawn at battle start.
+**Next:** M2-T4 – Occupancy & capacity.
+
+Optional leftovers from M2-T3: spawning every unit at the Area's centre stacks units once an Area holds two, which T4 fixes.
 
 Optional leftovers from M2-T2: rename the unit materials so the names tell the truth (`M_HeroUnit` is also the enemy's parent; e.g. `M_Unit` + `MI_Unit_Enemy`); delete the 3 unused default events in `BP_Unit`'s Event Graph; `MI_EnemyUnit` has `RefractionDepthBias` ticked as an override for no reason; `Input/Test.uasset` (from M1-T5) looks like a leftover.
 
 Older optional leftovers from M1: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
 
-**Last finished:** M2-T2 `BP_Unit` placeholder ✅ (2026-10-16). Before it: M2-T1 Area data ✅. **M1 – The Board** ✅ closed the same day; its task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
+**Last finished:** M2-T3 Spawn at battle start ✅ (2026-10-16). Before it: M2-T2 `BP_Unit` placeholder ✅, M2-T1 Area data ✅. **M1 – The Board** ✅ closed the same day; its task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
 
 #### Milestones
 
@@ -147,7 +148,7 @@ Older optional leftovers from M1: T6, the Append's "Hit:" has no trailing space 
 |---|---|---|---|---|
 | M0 | **Setup** | ✅ 2026-10-14 | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
 | M1 | **The Board** | ✅ 2026-10-16 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
-| M2 | **Pieces on the Board** | 🔄 | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
+| M2 | **Pieces on the Board** | 🔄 | 2 hero placeholders + 3 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
 | M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
 | M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events) |
@@ -272,6 +273,11 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Switch on (Enum)**: a flow node with one exit per enum value; execution leaves through the exit that matches. `BP_Unit`'s Construction Script uses Switch on `E_Team`: the Hero exit sets the hero material, the Enemy exit sets the enemy one. (**Select** is the data version: it picks one of several *values* instead of one of several exits.)
 - **Object reference variable**: a variable whose type is a class (e.g. `BP_Area`) and whose value is the "street address" of one actor of that class, or **None** while empty. `BP_Unit.CurrentArea` holds the Area the unit stands in.
 - **Pivot / actor origin**: the point an actor's location refers to. Where it sits inside the mesh matters: `BP_Unit`'s cube is lifted 90 cm so the origin is at its feet, and "place at this spot" stands it *on* the floor instead of half inside it.
+- **Spawn / Spawn Actor from Class**: creating an actor *while the game runs* instead of placing it in the editor. The node takes a Class (`BP_Unit`) and a Spawn Transform (where it goes) and returns a reference to the new actor. `BP_BattleGameMode` spawns every unit at battle start.
+- **Expose on Spawn**: a variable checkbox (needs Instance Editable too) that adds the variable as an input pin on Spawn Actor from Class. The value is set *before* the Construction Script runs, which is why `Team` colours the unit correctly.
+- **Get All Actors Of Class**: searches the running level for every actor of one class and returns them as an array (`BP_Area` → all 9 Areas). Fine at battle start; too slow to call every frame.
+- **Array / For Each Loop**: an array is a list of values of one type, sized by what's put in it. For Each Loop runs its Loop Body once per item, with **Array Element** = the current item and **Array Index** = its position (starting at 0).
+- **Collision Handling Override**: what Spawn Actor does if something is already in the spot: spawn anyway, nudge the actor aside, or give up. DarkDungeon uses "Try To Adjust Location, But Always Spawn".
 
 **Our game's terms**
 - **Area**: one rectangle of the board. It has a capacity (how many units fit) and neighbors (rectangles sharing an edge).
