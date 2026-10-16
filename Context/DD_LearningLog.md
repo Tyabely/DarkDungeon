@@ -116,3 +116,15 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Learned: when two branches start with the same step, move it before the split, so it exists (and is checked) once.
   - Tripped up: removing the casts also removed the hidden "is it empty?" check they were doing, so the first click and repeated empty clicks logged *Accessed None* while the game looked fine (a node called on None is skipped). Also, the Is Valid that was there checked `HitArea`, not `SelectedArea`: two different questions.
   - Tripped up: while rewiring, the event ended up on **Triggered** instead of **Started** (fires every frame while held). Not noticed in play because re-selecting the same Area looks identical.
+
+**2026-10-16 · M2-T1 · Area data**
+- **Learned:**
+  - An **enum** is your own variable type with a fixed list of named choices. In UE it's an asset (`E_SpawnSide`), and every variable of that type picks one choice from a dropdown.
+  - Why an enum beats the alternatives: two booleans could both be true, and an integer code is unreadable and allows invalid values.
+  - The **first** enumerator is the default for new variables, so "None" goes first.
+  - Data the level designer sets per Area (`Capacity`, `SpawnSide`) is Instance Editable, the same tool as `SizeX`/`SizeY` in M1.
+  - Design choices hiding in the "data" task: capacity by size, and spawn sides sized for later (3–4 enemies), not just for the MVP's 2.
+- **Tripped up:**
+  - Wasn't sure the enum was built right (it was: None / Hero / Enemy, in that order).
+  - Asked whether spawn sides need marking separately. The `SpawnSide` value set on each Area *is* the marking.
+  - Tooling: the Unreal MCP connection dropped after the editor's server restarted. Restarting the server isn't enough; the Claude session has to reconnect (or start fresh).

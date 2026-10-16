@@ -34,13 +34,14 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 ### 3. Battlefield 🟡 (board look from refs 1–5)
 
 - A room is made of **Areas**, rectangles of different sizes. ✅
-- Each Area has: **capacity** (the pips in refs: how many units fit), **neighbors** (shared edge = adjacent), optional **tags** (Hero Spawn, Enemy Spawn, High Ground…).
+- Each Area has: **capacity** (the pips in refs: how many units fit; scales with size, 2–4 in the MVP room), **neighbors** (shared edge = adjacent), and a **spawn side** (None / Hero / Enemy). ✅ Other tags (e.g. High Ground) are post-MVP.
+- MVP room spawns: enemies in the left column (7 slots, room for groups of 3–4), heroes in the two right corners (4 slots). 🟡 Revisit after the first spawn playtest.
 - **Distance / Range** = number of Area steps between two Areas (graph distance, not world distance).
 - Units stand *in* an Area, not on a grid tile. Abilities target an **Area** (and pick unit(s) inside it).
 - **No stances.** Abilities only check range; positioning on the board does the rest. ✅
 - Areas **touch edge to edge**; each draws a thin dark border so the rectangles read clearly. Gaps only where they shape the room. ✅
 - MVP: one hand-built room (~8–10 Areas). Built in M1-T3: 9 Areas, symmetric (see Decisions #21). Procedural generation later, but the data shape (Areas + adjacency) is designed now so generation can plug in. ✅
-- ❓ High/Low Ground, MVP or later?
+- High/Low Ground: **post-MVP** nice-to-have, not in the demo (decided 2026-10-16). Kept as a possible fun feature for later.
 
 ### 4. The Time System (core identity)
 

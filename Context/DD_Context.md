@@ -119,11 +119,10 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M2 – Pieces on the Board** · ⬜ next. Goal: 2 hero placeholders + 2 enemy placeholders stand in Areas, and an Area never holds more units than its capacity.
-*(Draft task list, written when M1 closed. Change it freely in the first M2 session.)*
+**M2 – Pieces on the Board** · 🔄 in progress. Goal: 2 hero placeholders + 2 enemy placeholders stand in Areas, and an Area never holds more units than its capacity.
+*(Draft task list, written when M1 closed. Change it freely as M2 goes.)*
 
-- [ ] **T1 – Area data.** Each Area knows how many units fit and whether it's a spawn spot.
-  *Done when:* `BP_Area` has an Instance Editable integer `Capacity` and an Instance Editable **enum** `SpawnSide` (`E_SpawnSide`: None / Hero / Enemy, in `Board/`); every Area in the room has sensible values (GDO §3), with at least 2 Hero and 2 Enemy spawn slots in total.
+- [x] **T1 – Area data.** ✅ 2026-10-16. Built as: `E_SpawnSide` (None / Hero / Enemy) in `Board/`; `BP_Area` has `Capacity` + `SpawnSide`, both Instance Editable. Areas renamed so `Area_1`…`Area_9` run left→right, top→bottom. Capacity by size: corners 2, side Areas 3, centre column 4. Enemy = `Area_1`/`4`/`7` (left column, 7 slots), Hero = `Area_3`/`9` (right corners, 4 slots). Decisions #37–#39.
 - [ ] **T2 – `BP_Unit` placeholder.** One reusable "piece".
   *Done when:* `BP_Unit` (new `Units/` folder) has a simple visible mesh, an Instance Editable `Team` enum (`E_Team`: Hero / Enemy) that changes its colour (Construction Script), and a `CurrentArea` (`BP_Area` reference) variable; a hero and an enemy placed by hand look different.
 - [ ] **T3 – Spawn at battle start.** The Game Mode deploys the pieces.
@@ -135,13 +134,11 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
   *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
 
-**Next session starts with:** a 1-minute fix, then M2-T1. **Fix first:** `IA_Select` is now wired from its **Triggered** pin instead of **Started** (it probably got swapped while moving nodes for the cleanup). With no triggers set, Triggered fires every frame while the button is held, so the whole select chain repeats (Decisions #26). It looks the same only because it keeps re-selecting the same Area. Move the wire back to Started.
+**Next:** M2-T2 – `BP_Unit` placeholder. (The M1 `IA_Select` Triggered → Started fix is done.)
 
-T7 cleanup ✅ done (2026-10-16): `SelectedArea` (one variable, cleared on empty click), the casts replaced by a Validated Get, and the "turn the old one off" step moved to the start of the chain so it exists once; names now `M_Area` / `MI_Area_Highlighted` / `bIsHighlighted`.
+Older optional leftovers from M1: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
 
-Older optional leftovers: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, labels skip `Area_3` and aren't zero-padded, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
-
-**Last finished:** M1-T7 Highlight ✅ (2026-10-16), which closes **M1 – The Board** ✅. M1's task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
+**Last finished:** M2-T1 Area data ✅ (2026-10-16). **M1 – The Board** ✅ closed the same day; its task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
 
 #### Milestones
 
@@ -149,7 +146,7 @@ Older optional leftovers: T6, the Append's "Hit:" has no trailing space and the 
 |---|---|---|---|---|
 | M0 | **Setup** | ✅ 2026-10-14 | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
 | M1 | **The Board** | ✅ 2026-10-16 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
-| M2 | **Pieces on the Board** | ⬜ | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
+| M2 | **Pieces on the Board** | 🔄 | 2 hero placeholders + 2 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
 | M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
 | M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events) |
@@ -224,6 +221,7 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Redirector**: a hidden note left behind when you move an asset ("it moved over there"), so old links keep working. Clean up with right-click folder → Update Redirector References.
 - **Function vs Event**: both are "do this" blocks. A **Function** runs instantly and can return an answer ("what's the distance between these two Areas?"). An **Event** is a reaction to something happening ("when clicked…") and can't return an answer.
 - **Variable / Array / Struct / Enum**: a Variable is a labeled box holding one value (HP = 500). An Array is a list of boxes (all enemies in the room). A Struct is a bundle of different values that belong together (an ability's name + cost + damage range). An Enum is a fixed list of choices (Target: Closest / Furthest / Lowest HP).
+- **Enumeration asset / Enumerator**: in UE you create your own enum as an asset (Content Browser → Blueprint → Enumeration, prefix `E_`, e.g. `E_SpawnSide`). Each choice inside it is an *enumerator* (None, Hero, Enemy). A new variable of that type starts on the **first** enumerator, so put the "nothing / default" choice first. Better than two booleans (both could be true) or a number code (`2` means nothing to a reader, and `7` is allowed).
 - **Game Mode / Game State**: Game Mode holds the *rules* of the match ("battle starts when…, you lose when…"). Game State holds the *current situation* everyone can read ("the clock is at 12.5s").
 - **Player Controller**: the Blueprint that represents *you*, the person at the keyboard. It turns mouse clicks into game commands like "select this Area".
 - **Player State**: a small actor the Game Mode creates for every player to hold info *about* that player (name, score). Unreal won't let a player join without one, which is why the "pawnless" `NoPawnPlayerController` failed with "PlayerState is null".
