@@ -111,3 +111,8 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Proposed Areas listening for clicks, and called Interfaces a broadcaster/listener tool (that's an Event Dispatcher; an Interface is a shared message). Neither was needed: the controller already knows the one Area to talk to.
   - First working version used `PreviouslyHitArea` + `MostRecentlyHitArea` and turned the new Area on *before* the old one off, so clicking an Area, then empty space, then the same Area left it dark. Fixed by reordering to off → set → on with one variable.
   - Used Cast To BP_Area on variables already typed `BP_Area`, as an "is it empty?" check. Works, but Is Valid says what's meant (cleanup noted in Current focus).
+- **Follow-up (same day, cleanup):**
+  - Learned: a Cast is only needed when a reference's type is too *broad* (Hit Actor = any Actor). A variable already typed `BP_Area` can call `SetHighlighted` directly; drag off the pin and see if the function is offered.
+  - Learned: when two branches start with the same step, move it before the split, so it exists (and is checked) once.
+  - Tripped up: removing the casts also removed the hidden "is it empty?" check they were doing, so the first click and repeated empty clicks logged *Accessed None* while the game looked fine (a node called on None is skipped). Also, the Is Valid that was there checked `HitArea`, not `SelectedArea`: two different questions.
+  - Tripped up: while rewiring, the event ended up on **Triggered** instead of **Started** (fires every frame while held). Not noticed in play because re-selecting the same Area looks identical.

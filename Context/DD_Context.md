@@ -135,14 +135,13 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
   *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
 
-**Next session starts with:** M2-T1. Before it, the small T7 cleanup (optional, ~10 min, recommended before T5/T6 lean on the selection):
-- The Is Not Valid branch turns the old Area off but doesn't empty `MostRecentlyHitArea`, so after clicking empty space the controller still "remembers" an Area nothing shows as selected. Harmless now; wrong as soon as anything asks "what's selected?". Clear it there, and rename the variable to `SelectedArea`, which is then exactly what it holds.
-- The three Cast To BP_Area nodes on `BP_Area`-typed variables only act as "is it empty?" checks. Use Is Valid / a Validated Get.
-- Names per Conventions: `MI_HighlightedInner` → `MI_Area_Highlighted`, `M_WhiteInner` → `M_Area` (or add `MI_Area_Default` and swap MI ↔ MI), `IsHIghlighted` → `bIsHighlighted`.
+**Next session starts with:** a 1-minute fix, then M2-T1. **Fix first:** `IA_Select` is now wired from its **Triggered** pin instead of **Started** (it probably got swapped while moving nodes for the cleanup). With no triggers set, Triggered fires every frame while the button is held, so the whole select chain repeats (Decisions #26). It looks the same only because it keeps re-selecting the same Area. Move the wire back to Started.
+
+T7 cleanup ✅ done (2026-10-16): `SelectedArea` (one variable, cleared on empty click), the casts replaced by a Validated Get, and the "turn the old one off" step moved to the start of the chain so it exists once; names now `M_Area` / `MI_Area_Highlighted` / `bIsHighlighted`.
 
 Older optional leftovers: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, labels skip `Area_3` and aren't zero-padded, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
 
-**Last finished:** M1-T7 Highlight ✅ (2026-10-16), which closes **M1 – The Board** ✅. M1's task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#35.
+**Last finished:** M1-T7 Highlight ✅ (2026-10-16), which closes **M1 – The Board** ✅. M1's task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
 
 #### Milestones
 
@@ -261,12 +260,12 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Gameplay Tag**: a label like `Status.Bleed` or `Ability.Warrior.Charge`, organized in a tree. Safer than typing text by hand, because a typo can't create a "new" tag by accident.
 - **UMG** (Unreal Motion Graphics): Unreal's tool for building UI: buttons, health bars, the timeline.
 - **Class vs instance vs reference**: the class `BP_Area` is the house plan; `Area_7` in the level is one house built from it (an instance); an object reference is that house's street address. A Cast never *chooses* which house. It only checks that the address you already hold is a `BP_Area` house.
-- **Material (`M_`)**: the recipe for how a surface looks (colour, shine, roughness), built as a node graph that ends in outputs like Base Color. `M_WhiteInner` colours the Areas' `TopCube`.
+- **Material (`M_`)**: the recipe for how a surface looks (colour, shine, roughness), built as a node graph that ends in outputs like Base Color. `M_Area` colours the Areas' `TopCube`.
 - **Shader / shader compile**: a shader is the small program the graphics card runs to draw a material. Every new *Material* has to be compiled into shaders, which is slow (the "Compiling Shaders" counter). That's the expensive part, not swapping materials at runtime.
 - **Material Parameter (Scalar / Vector)**: a named value inside a material that can be changed *without* editing its graph. Scalar = one number (`ColorScaling`), Vector = a colour or three numbers (`ColorRegular`, `ColorHighlight`).
-- **Material Instance (`MI_`)**: a copy of a material that changes only parameter values. It reuses the parent's shaders, so it costs almost nothing to make. `MI_HighlightedInner` = `M_WhiteInner` with `ColorScaling` = 1.
+- **Material Instance (`MI_`)**: a copy of a material that changes only parameter values. It reuses the parent's shaders, so it costs almost nothing to make. `MI_Area_Highlighted` = `M_Area` with `ColorScaling` = 1.
 - **Override (in a Material Instance)**: the checkbox next to each parameter. Unticked (greyed out) = "use the parent's value"; ticked = "this instance uses its own value". Every parameter starts unticked, which is why a fresh MI seems to refuse edits.
-- **Lerp (Linear Interpolate)**: blends between A and B by Alpha: 0 = all A, 1 = all B, 0.5 = halfway. `M_WhiteInner` lerps white → blue by `ColorScaling`, so a highlight could later *fade in* by animating Alpha.
+- **Lerp (Linear Interpolate)**: blends between A and B by Alpha: 0 = all A, 1 = all B, 0.5 = halfway. `M_Area` lerps white → blue by `ColorScaling`, so a highlight could later *fade in* by animating Alpha.
 - **Set Material**: a node that puts a different material on one slot (Element Index) of a mesh component at runtime. `SetHighlighted` uses it on `TopCube`.
 - **Dynamic Material Instance**: a Material Instance created *while the game runs*, so you can change its parameters live (e.g. fade `ColorScaling` 0 → 1). The alternative to swapping between ready-made MIs; not used yet.
 - **Reroute node**: a dot on a wire that only bends it, to keep a graph readable. Does nothing to the logic. Double-click a wire to add one.
