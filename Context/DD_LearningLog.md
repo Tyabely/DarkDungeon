@@ -152,3 +152,21 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Thought the colour issue could only be fixed by moving the logic to the Event Graph. It worked, but only because spawn and SET happen in the same frame; Expose on Spawn is the real fix.
   - First Select attempt used **Array Index** (the item's position in the list) instead of **Spawn Side**, which turned its Index into an Integer. A fresh Select wired to Spawn Side first showed the None / Hero / Enemy options.
   - Tooling: the MCP connection dropped mid-session again and only came back after restarting the Claude app. Logs on both sides show no error.
+
+**2026-10-18 · M2-T4 · Occupancy & capacity (in progress)**
+- **Learned:**
+  - **Length vs index:** Length counts items, an index numbers slots from 0, Last Index = Length − 1. The capacity check is `Length < Capacity`; the first try (`Last Index < Capacity`) let one unit too many in.
+  - **Add vs Insert:** Add appends with no index needed. Insert at Last Index on an empty array (−1) silently did nothing while the function still returned true.
+  - **Target = the receiver, not the sender.** `AddUnit` lives on `BP_Area`, so its Target must be *an Area* (`CurrentArea`), and Self goes into Added Unit. Casting Self to `BP_Area` can never work, because a unit isn't an Area.
+  - Registering in the unit's own BeginPlay means any spawner (Game Mode, a later summon) gets registration for free.
+  - **Pure nodes re-run for every loop pass**, so the chain feeding Set Actor Location reads a new Array Index each time. The For Each *is* the loop.
+  - **Lookup table instead of branches:** per-count layouts as data (`Layouts`, an array of the `S_SlotLayout` struct) picked by `Length − 1`. Wrapping an array in a struct is how you get an array of arrays. A 90° Rotate Vector Around Axis replaces a manual X/Y flip.
+  - An array element's ⌄ menu in Details has Insert / Delete / Duplicate.
+- **Tripped up:**
+  - "Function inside a function?": `AddUnit` *is* the checker; no extra layer was needed.
+  - Calling `AddUnit` from `BP_Unit` with Target = self (error) and then a Cast of self to `BP_Area` (always fails), until Target = `CurrentArea` clicked. Felt like having to "fake the sender".
+  - `Layouts` first made as a **local** variable (no defaults for local arrays), then as a Vector array instead of an `S_SlotLayout` array. The struct is found by name in the type picker, not under Vector.
+  - Break S_SlotLayout didn't show up when dragging from the array; it only appears on a single element (after a Get).
+  - Subtract node with B = **−1** (Length + 1): 2 units read the 4-unit row and 3 units read a row that doesn't exist (all at the centre). The Rotate node was also left unwired.
+  - The "wall" in 2-slot corners was the refused 3rd unit still standing at the centre; the capacity check worked.
+  - `MoveToArea` arranges `CurrentArea` but adds to `AreaToMove`. It works only because both are the same at spawn.

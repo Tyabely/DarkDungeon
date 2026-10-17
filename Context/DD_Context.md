@@ -127,14 +127,15 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T3 – Spawn at battle start.** ✅ 2026-10-16. Built as: `BP_BattleGameMode` BeginPlay → Get All Actors Of Class (`BP_Area`) → `Areas` → For Each → Switch on `E_SpawnSide` (Hero and Enemy exits both feed **one** Spawn Actor `BP_Unit` at the Area's `TopCube`) → one unit per spawn Area (2 heroes, 3 enemies); a **Select** on `SpawnSide` gives the `Team`. `Team` and `CurrentArea` are Expose on Spawn; colour = `SwitchTeam` function in the Construction Script. No units placed in the level. Decisions #43–#46.
 - [ ] **T4 – Occupancy & capacity.** Areas know who stands in them.
   *Done when:* `BP_Area` keeps an **array** of the units in it, with functions to add/remove a unit that refuse when it's full (returns success yes/no); units in the same Area stand side by side, not inside each other; trying to over-fill an Area prints a clear message.
+  *Progress (2026-10-18, not yet verified):* `UnitsInArea` (array of `BP_Unit`), `AddUnit` (Length < Capacity → Add → true) and `RemoveUnit` (Remove Item) on `BP_Area`. `BP_Unit` BeginPlay → `MoveToArea(CurrentArea)` → prints "Area Capacity is full!" on false. `ArrangeUnits` places units from a `Layouts` table (array of `S_SlotLayout`, row = unit count − 1), rotated 90° when the Area is longer in Y; works in PIE for 1–3 units. Decisions #47–#50.
 - [ ] **T5 – Neighbours.** Which Areas share an edge (GDO §3).
   *Done when:* each `BP_Area` has an array of neighbour Areas (filled by hand in the level, or worked out from positions; your choice, recorded as a Decision); selecting an Area also tints its neighbours in a second look, so you can check the map by clicking.
 - [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
   *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
 
-**Next:** M2-T4 – Occupancy & capacity.
+**Next:** M2-T4 – Occupancy & capacity (finish + verify).
 
-Optional leftovers from M2-T3: spawning every unit at the Area's centre stacks units once an Area holds two, which T4 fixes.
+**Next session starts with…** (1) a refused unit still stands at the Area's centre as a "ghost" that no Area lists → `BP_Unit` BeginPlay false path: Destroy Actor after the Print String; (2) `MoveToArea` calls `ArrangeUnits` on `CurrentArea` but `AddUnit` on `AreaToMove`. It only works because both are the same at spawn; make them match, or call `ArrangeUnits` inside `AddUnit` (True path) and `RemoveUnit`; (3) remove the leftover test spawns, the `ArrangeForTwo/Three/Four` and `ArrangeToX` locals, the empty Event Tick in `BP_Unit` and the always-true Branch if any are left; (4) PIE test: 1–4 units in one Area, an Area longer in Y, and one over-fill → then say "done" for verification.
 
 Optional leftovers from M2-T2: rename the unit materials so the names tell the truth (`M_HeroUnit` is also the enemy's parent; e.g. `M_Unit` + `MI_Unit_Enemy`); delete the 3 unused default events in `BP_Unit`'s Event Graph; `MI_EnemyUnit` has `RefractionDepthBias` ticked as an override for no reason; `Input/Test.uasset` (from M1-T5) looks like a leftover.
 
@@ -277,6 +278,18 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Expose on Spawn**: a variable checkbox (needs Instance Editable too) that adds the variable as an input pin on Spawn Actor from Class. The value is set *before* the Construction Script runs, which is why `Team` colours the unit correctly.
 - **Get All Actors Of Class**: searches the running level for every actor of one class and returns them as an array (`BP_Area` → all 9 Areas). Fine at battle start; too slow to call every frame.
 - **Array / For Each Loop**: an array is a list of values of one type, sized by what's put in it. For Each Loop runs its Loop Body once per item, with **Array Element** = the current item and **Array Index** = its position (starting at 0).
+- **Index / Length / Last Index**: an **index** is a slot's number in an array, starting at 0. **Length** counts the items; **Last Index** = Length − 1. One unit in `UnitsInArea` → Length 1, Last Index 0; an empty array → Length 0, Last Index −1.
+- **Add vs Insert (array)**: **Add** puts an item on the end, no index needed. **Insert** puts it at an exact index and pushes the rest down; an index that doesn't exist (like −1) is skipped. `AddUnit` uses Add, because the order inside an Area doesn't matter.
+- **Remove Item**: finds an item anywhere in the array and removes it; returns true if it was found. `RemoveUnit` uses it.
+- **Target pin**: on a function from another Blueprint, Target = *which object does the work* (the receiver, not the caller). `AddUnit`'s Target is an Area (`CurrentArea`); the unit itself goes into the **Added Unit** input. Calling it with Target = self from `BP_Unit` is an error, because a unit has no `AddUnit`.
+- **Local variable**: a variable that exists only inside one function while it runs, then disappears. Good for scratch values; not for settings. The editor can't take typed-in default values for a local *array*, which is why `Layouts` became a member variable.
+- **User-defined Structure (`S_`)**: a struct you create yourself (Content Browser → Blueprint → Structure). `S_SlotLayout` has one field, `Slots` (array of Vector). Wrapping an array in a struct is the way to get an "array of arrays", which Blueprint doesn't allow directly. **Split Struct Pin** (right-click a struct pin) shows its fields on the node itself, the same as a Break.
+- **Lookup table**: data you look up instead of calculating. `Layouts` row N − 1 holds the slot positions for N units: one table, one loop, no Switch per case.
+- **Get (a copy) vs Get (a ref)**: both read the item at an index. **A copy** hands you a duplicate, so changing it leaves the array alone; **a ref** hands you the item itself, so changes (e.g. Set Members on a struct) go into the array. For object references (`BP_Unit`) both point to the same actor anyway; it matters for structs, vectors and numbers.
+- **Integer division**: dividing whole numbers throws the fraction away: (2 − 1) / 2 = 0, not 0.5. Convert to float before dividing when the fraction matters.
+- **Rotate Vector Around Axis**: turns a vector by an angle around an axis. Axis (0, 0, 1) = around "up". `ArrangeUnits` rotates the slot layout 90° when an Area is longer in Y. With Axis (0, 0, 0) there's nothing to rotate around.
+- **Set Actor Location vs Set Actor Relative Location**: Relative is measured from the parent the actor is attached to; an unattached actor's "relative" is the world. Units aren't attached to Areas, so use Set Actor Location with Area centre + offset.
+- **Event Tick**: runs every frame. The node's mere presence makes the actor tick, even with nothing wired to it, so delete unused ones.
 - **Collision Handling Override**: what Spawn Actor does if something is already in the spot: spawn anyway, nudge the actor aside, or give up. DarkDungeon uses "Try To Adjust Location, But Always Spawn".
 
 **Our game's terms**
