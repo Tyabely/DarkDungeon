@@ -132,7 +132,9 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 **Next:** M2-T6 – Move a hero by clicking.
 
-**Next session starts with…** two 2-minute cleanups from T5 in `BP_Area`: (1) `SetLook` has two Selects; the first one returns `NewLook` whatever its Index, so delete it and wire `NewLook` straight into the second Select's Index; (2) `AreaLook` is no longer set (in PIE the selected Area still read "Normal"): SET it from `NewLook` in `SetLook`, or delete the variable. Also: `TopCube`'s default material in the Components panel is the engine `BasicShapeMaterial`, not `M_Area`, so a never-clicked Area and a cleared one use different materials; set `M_Area` there. Then T6.
+T5 cleanups ✅ (checked 2026-10-18): `SetLook` = SET `AreaLook` → one Select → Set Material; `TopCube` default material = `M_Area`.
+
+T6 plan so far: step 1 = custom trace channel `AreaPick` (Areas Block, default Ignore) so units stop blocking Area picking; the click flow (select hero / move) comes after.
 
 Carried into T6: `RemoveUnit` doesn't call `ArrangeUnits` yet, so the units left behind won't close the gap after a move.
 
