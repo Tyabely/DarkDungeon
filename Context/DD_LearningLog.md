@@ -153,7 +153,7 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - First Select attempt used **Array Index** (the item's position in the list) instead of **Spawn Side**, which turned its Index into an Integer. A fresh Select wired to Spawn Side first showed the None / Hero / Enemy options.
   - Tooling: the MCP connection dropped mid-session again and only came back after restarting the Claude app. Logs on both sides show no error.
 
-**2026-10-18 · M2-T4 · Occupancy & capacity (in progress)**
+**2026-10-18 · M2-T4 · Occupancy & capacity** ✅
 - **Learned:**
   - **Length vs index:** Length counts items, an index numbers slots from 0, Last Index = Length − 1. The capacity check is `Length < Capacity`; the first try (`Last Index < Capacity`) let one unit too many in.
   - **Add vs Insert:** Add appends with no index needed. Insert at Last Index on an empty array (−1) silently did nothing while the function still returned true.
@@ -169,4 +169,24 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Break S_SlotLayout didn't show up when dragging from the array; it only appears on a single element (after a Get).
   - Subtract node with B = **−1** (Length + 1): 2 units read the 4-unit row and 3 units read a row that doesn't exist (all at the centre). The Rotate node was also left unwired.
   - The "wall" in 2-slot corners was the refused 3rd unit still standing at the centre; the capacity check worked.
-  - `MoveToArea` arranges `CurrentArea` but adds to `AreaToMove`. It works only because both are the same at spawn.
+  - `MoveToArea` arranges `CurrentArea` but adds to `AreaToMove`. It works only because both are the same at spawn. Fixed by moving `ArrangeUnits` into `AddUnit`'s true path, so the Area that accepts a unit is always the one that re-arranges.
+  - Finishing pass: a refused unit was a "ghost" that no Area listed, standing inside the others. Destroy Actor fixed it, but the first try *replaced* the Print String instead of following it, so the over-fill went silent. Final chain: Print → Destroy Actor.
+- **Thinking ahead (T5 brief, same day):** picked an enum over "index 0 of an array = selected" for the Area's three looks (a hidden rule like that is easy to forget), and spotted both catches of edge-box neighbour detection (T-junctions, diagonal corners) before building it.
+
+**2026-10-18 · M2-T5 · Neighbours** ✅
+- **Learned:**
+  - **Range overlap** = Min(ends) − Max(starts), one axis at a time: positive = shared length, 0 = touching at a point, negative = gap. It doesn't depend on the order of the two Areas, and Min / Max do the "sorting".
+  - The neighbour rule needs **both** axes: one ≈ 0 (they touch) **and** the other > tolerance (they share some edge). Corner contact = both 0; "edges line up but there's a gap" = one 0, other negative. Both > 0 = the rectangles overlap (a level bug → warning print).
+  - **Who does what:** `IsNeighbour(OtherArea)` only answers about one pair (the caller plugs the other Area in, like `AddUnit`'s input); the BeginPlay loop asks it about every other Area. Get All Actors Of Class isn't allowed in the Construction Script, but bounds are, so they're ready before any BeginPlay.
+  - Floats: compare with **Nearly Equal** and a tolerance, not `==`.
+  - An **enum** is its own asset, not something made inside a Blueprint. One enum input beats two bools (no meaningless "both true" case), and a wire only joins pins of the same type.
+  - **Switch vs Select again:** three Set Material nodes that differ only in the material = a value choice → one Select into one Set Material.
+  - **Array into Target** calls the function on every item, no loop node needed.
+  - Clear the old selection *before* setting the new one, or a new selection that was an old neighbour gets wiped.
+  - Debugging order that worked: confirm the parts that do work (skip-self, false never adds), find the unconnected output, then **print the locals** to see the real numbers.
+- **Tripped up:**
+  - Worked the puzzle by mixing up which values are an Area's start and end, so a real overlap came out negative (1 − 3 instead of 3 − 1).
+  - Swapped the starts' Max for a Min while experimenting, so no axis ever gave 0.
+  - First return rule `X == 0 OR Y == 0` (corners count), then XOR (gaps count). The fix needed "the other axis is positive".
+  - First idea for the look was "index 0 of an array = selected", rejected for an enum. Then two bools on `SetLook`, because the enum didn't connect to the bool pins.
+  - `SetLook`'s first Select had every option wired to `NewLook`, so it always returned `NewLook`.

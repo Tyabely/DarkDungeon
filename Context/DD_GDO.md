@@ -41,6 +41,7 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - Units stand *in* an Area, not on a grid tile. Abilities target an **Area** (and pick unit(s) inside it).
 - **No stances.** Abilities only check range; positioning on the board does the rest. ✅
 - Areas **touch edge to edge**; each draws a thin dark border so the rectangles read clearly. Gaps only where they shape the room. ✅
+- **Adjacency rule:** two Areas are neighbours when they share a piece of edge longer than zero. Corner-only contact and any gap don't count. It is worked out from the Areas' positions at battle start, so new or generated rooms need no hand-made lists (Decisions #53). In `LVL_Battle_01` the 120 cm gaps make the centre column a corridor: `Area_4`/`Area_6` don't touch it (Decisions #55). ✅
 - MVP: one hand-built room (~8–10 Areas). Built in M1-T3: 9 Areas, symmetric (see Decisions #21). Procedural generation later, but the data shape (Areas + adjacency) is designed now so generation can plug in. ✅
 - High/Low Ground: **post-MVP** nice-to-have, not in the demo (decided 2026-10-16). Kept as a possible fun feature for later.
 
