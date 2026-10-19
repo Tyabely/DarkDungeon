@@ -63,6 +63,7 @@ Rule of thumb: *if it will be copied 5+ times (abilities, enemies) or everything
 **Per feature / task loop:**
 1. **Brief** — I describe the goal, the UE concepts involved, and "done when…" criteria. No solution.
 2. **Plan (yours)** — you sketch how you'd do it (a few bullet points). I comment on the plan *before* you build. Cheap mistakes here, expensive later.
+   - **Branchy logic → flowchart first ✅.** When I can see a task will need several branches, states or "what happens on the next click" logic, I recommend sketching it as a flowchart in **Miro** before touching nodes (boxes for steps, diamonds/colours for decisions, one lane per event). You've done this on past projects, and in M2-T6 the click-flow chart is what unlocked deselect. A screenshot of the chart is also a great review channel.
 3. **Build** — you implement. Use the hint ladder when stuck.
 4. **Review** — you show me the result (see channels below). I review like a senior would: what's good, what will hurt later, what's fine to leave.
 5. **Log** — one or two lines into the Learning Log + Decision Log (below). This is also portfolio material.
@@ -137,7 +138,8 @@ T5 cleanups ✅ (checked 2026-10-18): `SetLook` = SET `AreaLook` → one Select 
 
 T6 progress (2026-10-19): ✅ `AreaPick` channel (default Ignore; `TopCube` + `BottomCube` Block). ✅ `GetUnitUnderCursor` (Visibility, heroes only). ✅ Hero select + selected look (`MI_HeroUnit_Selected`). Stale `bWasUnitSelectionValid` bug patched (set true on hero hit).
 Click rules agreed: hero click → select, highlight its Area + neighbours · Area click with no hero → highlight · hero selected + its own Area → deselect · hero selected + other Area → move (Add first; full → keep selected) · click nothing → clear all.
-**Next session starts with…** the move: hero selected + Area clicked currently lands where `SelectedUnit` gets cleared (and the look is reset at click start). Then deselect (same Area / nothing). Cleanups: merge `SwitchTeam` + `SetUnitLook` into one `SetUnitLook(bSelected)`; `Equal (Byte)` vs 0 → enum `==` Hero; Return node on `CastFailed`; optional: drop the flag by highlighting `CurrentArea` on hero hit.
+✅ (2026-10-19) Click flow rebuilt from a Miro flowchart: clear old looks → rays → `==` against the stored value → same = SET None (deselect), different = SET + look. Open: variable and look can disagree in 3 spots (hero deselect leaves `SelectedArea`; Area click keeps `SelectedUnit` unlit; empty click leaves both). Unused variable `bWasUnitSelectionValid` still exists.
+**Next session starts with…** the move, in the "hero stored + different Area clicked" branch. Cleanups: merge `SwitchTeam` + `SetUnitLook` into one `SetUnitLook(bSelected)`; `Equal (Byte)` vs 0 → enum `==` Hero; Return node on `CastFailed`; optional: drop the flag by highlighting `CurrentArea` on hero hit.
 
 Carried into T6: `RemoveUnit` doesn't call `ArrangeUnits` yet, so the units left behind won't close the gap after a move.
 
