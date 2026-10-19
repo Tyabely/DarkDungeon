@@ -24,6 +24,7 @@ The purpose of this project is to create a small UE5 game, primarily for learnin
 
 **How I explain things (the "no shortcuts" rule) ✅.** Assume zero coding knowledge. Claude tends to compress explanations and assume background knowledge. That's banned here:
 - **Every new term gets defined the first time it shows up**, in plain words plus a concrete example from *this* game. (Not "use an Event Dispatcher" but "an Event Dispatcher is a 'shout': one Blueprint shouts 'enemy died!', and anyone who signed up to listen reacts. The Blueprint that shouts doesn't need to know who's listening.")
+- **Use an everyday analogy for logic and math ✅.** When a calculation or rule is abstract, map it onto something from daily life first, then back onto the game. (M2-T5: overlap of two ranges = two work shifts, 9:00–17:00 and 12:00–20:00. You're both at work from the later start (Max of starts) to the earlier end (Min of ends); negative = never together.) That example landed better than any formula.
 - **Say *why* before *how*.** Every concept comes with the problem it solves, ideally a problem you've already hit.
 - **One new idea at a time.** If a task needs three new concepts, it gets split.
 - **No unexplained abbreviations or jargon.** If you see a word you don't know, that's my mistake, not yours. Say "define X" and I will.
@@ -134,7 +135,9 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 T5 cleanups ✅ (checked 2026-10-18): `SetLook` = SET `AreaLook` → one Select → Set Material; `TopCube` default material = `M_Area`.
 
-T6 plan so far: step 1 = custom trace channel `AreaPick` (Areas Block, default Ignore) so units stop blocking Area picking; the click flow (select hero / move) comes after.
+T6 progress (2026-10-19): ✅ `AreaPick` channel (default Ignore; `TopCube` + `BottomCube` Block). ✅ `GetUnitUnderCursor` (Visibility, heroes only). ✅ Hero select + selected look (`MI_HeroUnit_Selected`). Stale `bWasUnitSelectionValid` bug patched (set true on hero hit).
+Click rules agreed: hero click → select, highlight its Area + neighbours · Area click with no hero → highlight · hero selected + its own Area → deselect · hero selected + other Area → move (Add first; full → keep selected) · click nothing → clear all.
+**Next session starts with…** the move: hero selected + Area clicked currently lands where `SelectedUnit` gets cleared (and the look is reset at click start). Then deselect (same Area / nothing). Cleanups: merge `SwitchTeam` + `SetUnitLook` into one `SetUnitLook(bSelected)`; `Equal (Byte)` vs 0 → enum `==` Hero; Return node on `CastFailed`; optional: drop the flag by highlighting `CurrentArea` on hero hit.
 
 Carried into T6: `RemoveUnit` doesn't call `ArrangeUnits` yet, so the units left behind won't close the gap after a move.
 

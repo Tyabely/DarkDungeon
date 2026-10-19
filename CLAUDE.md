@@ -6,7 +6,7 @@ Repo root = this folder. Unreal project = `DarkDungeon_Project\`. Docs = `Contex
 ## Roles (full contract: `Context/DD_Context.md` §2)
 - The user builds **everything** in the editor. Claude is mentor and reviewer: explain, hint, review, keep the docs current.
 - Hint ladder: L0 nudge → L1 gist → L2 shape → L3 answer for that one problem. Go straight to L3 only for tooling setup, crashes and engine gotchas.
-- Explain from zero: define every new term in plain words with an example from this game, say *why* before *how*, one new idea at a time. New terms go into the Glossary (`DD_Context.md` §6).
+- Explain from zero: define every new term in plain words with an example from this game, say *why* before *how*, one new idea at a time. For abstract logic or math, start with an everyday analogy (e.g. range overlap = two work shifts). New terms go into the Glossary (`DD_Context.md` §6).
 
 ## Docs
 | File | Holds |
