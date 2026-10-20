@@ -68,7 +68,7 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - **Every hero has a basic Move** action (not one of their abilities). It costs seconds per Area moved (e.g. 1s per Area) and **escalates** like everything else, so you can't reposition for free over and over. ✅
 - **Controls (built in M2-T6):** click a hero to select it, click a **neighbouring** Area to move one step there; a full Area or a non-neighbour refuses the move. The hero stays selected afterwards, so several steps are quick clicks. Click the same hero/Area again, or empty space, to deselect. Only heroes can be selected. ✅ (Cost and multi-Area moves come with the time system, M4.)
 - **Every hero also has a 5th ability: a Mobility ability** that moves *and* does something (e.g. Charge: move + hit). ✅ See §6.
-- **Enemies move the board-game way:** they move up to their Speed (in Areas) toward their target, then attack if they're in range. If they can't reach, they still move as far as they can and the attack doesn't happen. ✅
+- **Enemies move the board-game way:** they move up to the **move distance of the action they're doing** (in Areas) toward their target, then attack if they're in range. Distance belongs to each move action, not to the unit, so one enemy can have a short move and a long one (decided M3-T1). If they can't reach, they still move as far as they can and the attack doesn't happen. ✅
 
 #### 4.4 Enemy Intents 🟡
 - Each enemy always shows its **next action + seconds left** ("3.5s Move + Attack Closest").
@@ -124,9 +124,9 @@ Post-MVP: Mage, Assassin, Shaman.
 
 ### 7. Enemies 🟡 (MVP: 2 types)
 
-Enemies move toward their target up to their **Speed** (Areas), then attack if in range (§4.3).
+Enemies move toward their target up to the action's **move distance** (Areas), then attack if in range (§4.3). The Move column is the distance their move actions use for now.
 
-| Enemy | HP | Speed | Actions |
+| Enemy | HP | Move | Actions |
 |---|---|---|---|
 | Ghoul (melee) | 500 | 2 | 3.5s Move + Attack Closest (90–120) · 5s Self-Buff + Attack |
 | Cultist (ranged) | 350 | 1 | 4s Attack Furthest (60–80) · 3s Curse Highest HP (−20% dmg dealt for 5s) |

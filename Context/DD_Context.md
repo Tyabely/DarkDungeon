@@ -124,15 +124,14 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 **M3 – Data-driven Units** · 🔄 in progress. Goal: heroes and enemies are built from data (name, team, HP, speed, look) instead of hard-coded values, so a new unit means a new data file, not new nodes.
 *(Draft task list, written when M2 closed. Change it freely as M3 goes.)*
 
-- [ ] **T1 – Unit data shape.** Decide what one unit's data holds (name, team, max HP, speed, look) and where it lives: a **Data Asset** per unit or one **Data Table**. Plan it before building (Decisions entry).
-  *Done when:* the data container exists with those fields, and you can say why you picked it over the other one.
-- [ ] **T2 – The four MVP units as data.** Warrior, Archer, Ghoul, Cultist with the GDO §6/§7 numbers (HP, Speed).
+- [x] **T1 – Unit data shape.** ✅ 2026-10-21. Built as: Data Assets. `PDA_Unit` (Primary Data Asset) holds `MaxHealth` (Int), `Name` (Text), `Team` (`E_Team`), `StaticMesh`, `Material` (Material Interface). Its empty children are `PDA_Hero` and `PDA_Enemy`. Speed moved to the Move action (Decisions #66–#71). M5 drafts are already in `Units/`: `PDA_Ability`, `PDA_Move`, `E_MoveTarget`, `AbilitySet`/`MoveSet` arrays.
+- [ ] **T2 – The four MVP units as data.** Warrior, Archer, Ghoul, Cultist with the GDO §6/§7 HP numbers (Speed now belongs to moves, M5). **First:** open the eye (Instance Editable) on `PDA_Unit`'s variables, or a `DA_`'s Details panel shows no fields. Set `PDA_Enemy`'s Class Default `Team` = Enemy. Optional: rename `Name` → `DisplayName`.
 - [ ] **T3 – Spawn from data.** The Game Mode spawns each unit with its data; `BP_Unit` reads team, HP and look from it (replaces the Team-only colouring). One test level line-up: Warrior + Archer vs Ghoul, Ghoul, Cultist.
 - [ ] **T4 – Gameplay Tags.** Tag units (e.g. `Unit.Hero.Warrior`, `Unit.Enemy.Ghoul`) and decide whether a tag replaces `E_Team` or sits next to it.
 - [ ] **T5 – Soft vs hard references.** Load each unit's look through a soft reference; check the difference in the Reference Viewer / Size Map.
 - [ ] **T6 – See the data in play.** A simple readout above each unit (name + HP) so the data is visible in PIE.
 
-**Next:** M3-T1 – Unit data shape.
+**Next:** M3-T2 – The four MVP units as data.
 
 Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` compares `Team` with **Equal (Byte)** vs 0 (use the enum `==` Hero) and its `CastFailed` path has no Return node; `SetUnitLook` still takes a `Team` input the unit already has; the controller's `MoveToArea` shares its name with the unit's (e.g. `TryMoveSelectedHero`); a `UnitPick` trace channel would replace `Visibility` for unit picking; spawn and move could become two functions (Decisions #63). Older: `Input/Test.uasset` (M1-T5) looks like a leftover; M1 notes (Append "Hit:" spacing, `TopCube` Z = 100 note, camera ~65 cm off centre).
 
@@ -252,7 +251,11 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Event Dispatcher**: a "shout". One Blueprint shouts "enemy died!" and anyone who signed up to listen reacts. The shouter doesn't need to know who's listening.
 - **Interface**: a promise that several different Blueprints understand the same message. E.g. "TakeDamage" works on heroes and enemies alike, without asking "are you a hero or an enemy?" first.
 - **Casting (Cast To X)**: asking "are you specifically a `BP_Ghoul`?" before talking to something. On success the node hands you the same thing *as that class*, so you can use its own variables and functions; otherwise it takes the **Cast Failed** exit. T6 uses Cast To BP_Area as the "only Areas count" filter. Useful sometimes; chains of casts make Blueprints fragile, which is why Interfaces and Dispatchers exist.
-- **Data Asset / Data Table**: files that hold *data only*, no logic. E.g. "Warrior: HP 1100, abilities Slash/Cleave/…". Changing a number means editing data, not rewiring Blueprints.
+- **Data Asset / Data Table**: files that hold *data only*, no logic. E.g. "Warrior: HP 1100, abilities Slash/Cleave/…". Changing a number means editing data, not rewiring Blueprints. A **Data Table (`DT_`)** is one spreadsheet: every row has the same columns, which come from a struct. A **Data Asset (`DA_`)** is one file per thing, filled in from a template. The data is **shared**: both Ghouls read the same `DA_Ghoul`, so it holds `MaxHealth`, and the HP that drops when hit lives on each `BP_Unit`.
+- **Primary Data Asset (`PDA_`)**: the Blueprint class you pick as the parent of a Data Asset *template* (`PDA_Unit`). "Primary" means the engine can find and load it by ID, which soft references use (T5). Templates can have children (`PDA_Hero`), but a filled-in `DA_` can't. You duplicate it instead. Filled-in copies are made with right-click → Miscellaneous → Data Asset → pick the template.
+- **Text vs String**: both hold words. **Text** is for words the player sees, and Unreal can translate it (`PDA_Unit.Name`). **String** is for internal labels and building messages.
+- **Static Mesh vs Skeletal Mesh**: a Static Mesh is a 3D model that never bends (a chess piece). A Skeletal Mesh has bones and can be animated, which needs an Animation Blueprint. DarkDungeon's placeholders are static.
+- **Material Interface**: the variable type that accepts both a Material (`M_`) and a Material Instance (`MI_`). `PDA_Unit.Material` uses it.
 - **Gameplay Tag**: a label like `Status.Bleed` or `Ability.Warrior.Charge`, organized in a tree. Safer than typing text by hand, because a typo can't create a "new" tag by accident.
 - **UMG** (Unreal Motion Graphics): Unreal's tool for building UI: buttons, health bars, the timeline.
 - **Class vs instance vs reference**: the class `BP_Area` is the house plan; `Area_7` in the level is one house built from it (an instance); an object reference is that house's street address. A Cast never *chooses* which house. It only checks that the address you already hold is a `BP_Area` house.

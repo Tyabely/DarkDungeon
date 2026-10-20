@@ -210,3 +210,18 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - `MoveToArea` returned nothing after SET `CurrentArea`; a Branch after `RemoveUnit` had its Condition unwired (always true).
   - In the refactor: `SelectArea`'s input and the controller `MoveToArea`'s target were left unwired, `PaintSelection` nested the Area inside the hero check, the refused-move path painted nothing, and an old `IA_Select` node was left in the graph.
   - Asked "is it two clicks?" when the hero went dark after a move: it was one click whose start switched the lights off.
+
+**2026-10-21 · M3-T1 · Unit data shape** ✅
+- **Learned:**
+  - **Data Table vs Data Asset:** a spreadsheet where every row has the same columns, vs one file per thing filled in from a template. Both can point to other Data Assets. Lists are easy on a Data Asset and fiddly in a table cell.
+  - **Template vs filled-in copy:** `PDA_` is a Blueprint class (Primary Data Asset) and can have children. `DA_` is a filled-in copy and can't. Duplicate it instead.
+  - **Fields go on the parent if code reads them without knowing the child.** Otherwise every read needs a Cast.
+  - **Data is shared:** `DA_Ghoul` is the stat card for every Ghoul. Max HP goes in data, current HP on each unit.
+  - **Data has no logic:** "moves and abilities work differently" is about the Blueprints that read them, not about which fields they can share.
+  - Text (player-facing) vs String. Look = Static Mesh + Material Interface, without animation.
+  - Sketched the shape in Miro before building.
+- **Tripped up:**
+  - Picked Data Assets partly because the tutorials did. The reasons that hold up are the different fields and the lists.
+  - Moved `Team` into both children to fix "two sources of truth", which made two separate variables.
+  - Read "use Text for Name" as "drop the name for an enum of unit types".
+  - First sketch left out Speed and Look. Built the M5 ability/move templates early.
