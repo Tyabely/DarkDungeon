@@ -190,3 +190,23 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - First return rule `X == 0 OR Y == 0` (corners count), then XOR (gaps count). The fix needed "the other axis is positive".
   - First idea for the look was "index 0 of an array = selected", rejected for an enum. Then two bools on `SetLook`, because the enum didn't connect to the bool pins.
   - `SetLook`'s first Select had every option wired to `NewLook`, so it always returned `NewLook`.
+
+**2026-10-21 · M2-T6 · Move a hero by clicking** ✅
+- **Learned:**
+  - **Trace channels and collision responses:** every component answers each channel with Block / Overlap / Ignore. A custom channel with default Ignore (`AreaPick`) only "sees" what opts in. A multi-trace still stops at the first Block. `Visibility` is just a channel's name; it has nothing to do with rendering.
+  - The ray hits a **component** (`TopCube`); the Hit Result also carries the **actor** that owns it, which is what the Cast reads.
+  - **Cast vs Is Valid:** Is Valid asks "is there anything?", Cast asks "is it this type?" (and fails on None too).
+  - **Selection state** lives in variables on the controller, and they must survive between clicks: wiping them at the end of every click made "same as before" impossible (the whiteboard).
+  - **Source of truth:** one place owns a fact, everything else reads it. Applied three times: selection on the controller, looks painted *from* the variables, spawn-vs-move asked of the Area's list instead of `CurrentArea`.
+  - **Compare before you overwrite:** deselect needs the old value at the moment the new hit arrives (the coat check).
+  - **One frame:** a whole click (lights off, decide, paint) runs before the screen draws, so a look that is cleared and never re-applied simply vanishes.
+  - A function that ends without reaching a Return node hands back default outputs, so a successful move came back as false.
+  - Splitting one big event into named functions (`ClearLooks`, `SelectHero`, `PaintSelection`…) so that each branch ends in one call. **Find References** shows who calls a function.
+  - **Flowchart first:** sketching the click flow in Miro is what made deselect click.
+- **Tripped up:**
+  - First fix for "lit but not selected" was a member flag (`bWasUnitSelectionValid`) for a fact that only lives for one click; it went stale after an empty click.
+  - Cleared both variables first, then fired the rays, so there was nothing left to compare against. Then wiped both at the end of every click.
+  - Deselect fixed for the looks but not the variables (three spots where they disagreed).
+  - `MoveToArea` returned nothing after SET `CurrentArea`; a Branch after `RemoveUnit` had its Condition unwired (always true).
+  - In the refactor: `SelectArea`'s input and the controller `MoveToArea`'s target were left unwired, `PaintSelection` nested the Area inside the hero check, the refused-move path painted nothing, and an old `IA_Select` node was left in the graph.
+  - Asked "is it two clicks?" when the hero went dark after a move: it was one click whose start switched the lights off.

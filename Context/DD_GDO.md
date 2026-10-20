@@ -66,6 +66,7 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 
 #### 4.3 Movement ✅
 - **Every hero has a basic Move** action (not one of their abilities). It costs seconds per Area moved (e.g. 1s per Area) and **escalates** like everything else, so you can't reposition for free over and over. ✅
+- **Controls (built in M2-T6):** click a hero to select it, click a **neighbouring** Area to move one step there; a full Area or a non-neighbour refuses the move. The hero stays selected afterwards, so several steps are quick clicks. Click the same hero/Area again, or empty space, to deselect. Only heroes can be selected. ✅ (Cost and multi-Area moves come with the time system, M4.)
 - **Every hero also has a 5th ability: a Mobility ability** that moves *and* does something (e.g. Charge: move + hit). ✅ See §6.
 - **Enemies move the board-game way:** they move up to their Speed (in Areas) toward their target, then attack if they're in range. If they can't reach, they still move as far as they can and the attack doesn't happen. ✅
 

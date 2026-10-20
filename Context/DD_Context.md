@@ -121,33 +121,22 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M2 – Pieces on the Board** · 🔄 in progress. Goal: 2 hero placeholders + 3 enemy placeholders stand in Areas (Decisions #43), and an Area never holds more units than its capacity.
-*(Draft task list, written when M1 closed. Change it freely as M2 goes.)*
+**M3 – Data-driven Units** · 🔄 in progress. Goal: heroes and enemies are built from data (name, team, HP, speed, look) instead of hard-coded values, so a new unit means a new data file, not new nodes.
+*(Draft task list, written when M2 closed. Change it freely as M3 goes.)*
 
-- [x] **T1 – Area data.** ✅ 2026-10-16. Built as: `E_SpawnSide` (None / Hero / Enemy) in `Board/`; `BP_Area` has `Capacity` + `SpawnSide`, both Instance Editable. Areas renamed so `Area_1`…`Area_9` run left→right, top→bottom. Capacity by size: corners 2, side Areas 3, centre column 4. Enemy = `Area_1`/`4`/`7` (left column, 7 slots), Hero = `Area_3`/`9` (right corners, 4 slots). Decisions #37–#39.
-- [x] **T2 – `BP_Unit` placeholder.** ✅ 2026-10-16. Built as: `BP_Unit` + `E_Team` (Hero / Enemy) in `Units/`; mesh = engine Cube scaled 60×60×180, origin at the feet. Construction Script: Switch on `Team` → Set Material `M_HeroUnit` / `MI_EnemyUnit`. `CurrentArea` (`BP_Area` ref) is still None. Corner Areas enlarged to 180×180, side Areas to 200×250. Decisions #40–#42. The two hand-placed test units get deleted in T3.
-- [x] **T3 – Spawn at battle start.** ✅ 2026-10-16. Built as: `BP_BattleGameMode` BeginPlay → Get All Actors Of Class (`BP_Area`) → `Areas` → For Each → Switch on `E_SpawnSide` (Hero and Enemy exits both feed **one** Spawn Actor `BP_Unit` at the Area's `TopCube`) → one unit per spawn Area (2 heroes, 3 enemies); a **Select** on `SpawnSide` gives the `Team`. `Team` and `CurrentArea` are Expose on Spawn; colour = `SwitchTeam` function in the Construction Script. No units placed in the level. Decisions #43–#46.
-- [x] **T4 – Occupancy & capacity.** ✅ 2026-10-18. Built as: `UnitsInArea` (array of `BP_Unit`) on `BP_Area`, changed only by `AddUnit` (Length < Capacity → Add → `ArrangeUnits` → true, else false) and `RemoveUnit` (Remove Item → bool). `BP_Unit` BeginPlay → `MoveToArea(CurrentArea)` (Is Valid → `AddUnit`) → on false: Print "Area Capacity is full!" → Destroy Actor. `ArrangeUnits` places every listed unit from the `Layouts` table (array of `S_SlotLayout`, row = count − 1, rows for 1–4), rotated 90° when the Area is longer in Y. Game Mode's For Loop (LastIndex 0) kept as an over-fill test knob. Decisions #47–#52.
-- [x] **T5 – Neighbours.** ✅ 2026-10-18. Built as: Construction Script stores `StartXY` (actor location) and `EndXY` (+ `SizeX`/`SizeY`). `IsNeighbour(OtherArea)`: overlap per axis = Min(ends) − Max(starts) (locals `AxisXComparison`/`AxisYComparison`); neighbour = (X ≈ 0 AND Y > 1) OR (Y ≈ 0 AND X > 1), Nearly Equal tolerance 0.1; both axes > 1 prints "*Area* is overlapping!". `BP_Area` BeginPlay: Get All Actors Of Class → skip self → `IsNeighbour` → AddUnique into `Neighbours` (array of `BP_Area`). Look = `E_AreaLook` (Normal / Selected / Neighbour); `SetLook(NewLook)` → Select → one Set Material (`M_Area` / `MI_Area_Highlighted` / `MI_Area_Neighbour`). Controller click: old Area + its `Neighbours` → Normal, then new Area → Selected, its `Neighbours` → Neighbour (the array goes straight into Target). Checked live in PIE: `Area_5` → `Area_2`, `Area_8`. Result: `Area_4`/`Area_6` aren't neighbours of the centre column (120 cm gap, kept). Decisions #53–#57.
-- [ ] **T6 – Move a hero by clicking.** Capacity matters in play.
-  *Done when:* click a hero to select it, click an Area to move it there; the move is refused when the Area is full; the old Area's list and the new one's are both updated. Units must not block Area picking any more (Decisions #29: custom trace channel, or another way you choose).
+- [ ] **T1 – Unit data shape.** Decide what one unit's data holds (name, team, max HP, speed, look) and where it lives: a **Data Asset** per unit or one **Data Table**. Plan it before building (Decisions entry).
+  *Done when:* the data container exists with those fields, and you can say why you picked it over the other one.
+- [ ] **T2 – The four MVP units as data.** Warrior, Archer, Ghoul, Cultist with the GDO §6/§7 numbers (HP, Speed).
+- [ ] **T3 – Spawn from data.** The Game Mode spawns each unit with its data; `BP_Unit` reads team, HP and look from it (replaces the Team-only colouring). One test level line-up: Warrior + Archer vs Ghoul, Ghoul, Cultist.
+- [ ] **T4 – Gameplay Tags.** Tag units (e.g. `Unit.Hero.Warrior`, `Unit.Enemy.Ghoul`) and decide whether a tag replaces `E_Team` or sits next to it.
+- [ ] **T5 – Soft vs hard references.** Load each unit's look through a soft reference; check the difference in the Reference Viewer / Size Map.
+- [ ] **T6 – See the data in play.** A simple readout above each unit (name + HP) so the data is visible in PIE.
 
-**Next:** M2-T6 – Move a hero by clicking.
+**Next:** M3-T1 – Unit data shape.
 
-T5 cleanups ✅ (checked 2026-10-18): `SetLook` = SET `AreaLook` → one Select → Set Material; `TopCube` default material = `M_Area`.
+Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` compares `Team` with **Equal (Byte)** vs 0 (use the enum `==` Hero) and its `CastFailed` path has no Return node; `SetUnitLook` still takes a `Team` input the unit already has; the controller's `MoveToArea` shares its name with the unit's (e.g. `TryMoveSelectedHero`); a `UnitPick` trace channel would replace `Visibility` for unit picking; spawn and move could become two functions (Decisions #63). Older: `Input/Test.uasset` (M1-T5) looks like a leftover; M1 notes (Append "Hit:" spacing, `TopCube` Z = 100 note, camera ~65 cm off centre).
 
-T6 progress (2026-10-19): ✅ `AreaPick` channel (default Ignore; `TopCube` + `BottomCube` Block). ✅ `GetUnitUnderCursor` (Visibility, heroes only). ✅ Hero select + selected look (`MI_HeroUnit_Selected`). Stale `bWasUnitSelectionValid` bug patched (set true on hero hit).
-Click rules agreed: hero click → select, highlight its Area + neighbours · Area click with no hero → highlight · hero selected + its own Area → deselect · hero selected + other Area → move (Add first; full → keep selected) · click nothing → clear all.
-✅ (2026-10-19) Click flow rebuilt from a Miro flowchart: clear old looks → rays → `==` against the stored value → same = SET None (deselect), different = SET + look. Open: variable and look can disagree in 3 spots (hero deselect leaves `SelectedArea`; Area click keeps `SelectedUnit` unlit; empty click leaves both). Unused variable `bWasUnitSelectionValid` still exists.
-**Next session starts with…** the move, in the "hero stored + different Area clicked" branch. Cleanups: merge `SwitchTeam` + `SetUnitLook` into one `SetUnitLook(bSelected)`; `Equal (Byte)` vs 0 → enum `==` Hero; Return node on `CastFailed`; optional: drop the flag by highlighting `CurrentArea` on hero hit.
-
-Carried into T6: `RemoveUnit` doesn't call `ArrangeUnits` yet, so the units left behind won't close the gap after a move.
-
-Optional leftovers from M2-T2: rename the unit materials so the names tell the truth (`M_HeroUnit` is also the enemy's parent; e.g. `M_Unit` + `MI_Unit_Enemy`); delete the 3 unused default events in `BP_Unit`'s Event Graph; `MI_EnemyUnit` has `RefractionDepthBias` ticked as an override for no reason; `Input/Test.uasset` (from M1-T5) looks like a leftover.
-
-Older optional leftovers from M1: T6, the Append's "Hit:" has no trailing space and the function's output pin `HitActor` could be `Area`; T3, `TopCube` Z = 100 has no note; T4, camera X (385) is ~65 cm off the room's centre (~320) and the near row sits close to the frame's bottom edge.
-
-**Last finished:** M2-T5 Neighbours ✅ (2026-10-18). Before it: M2-T4 Occupancy & capacity ✅, M2-T3 Spawn at battle start ✅, M2-T2 `BP_Unit` placeholder ✅, M2-T1 Area data ✅. **M1 – The Board** ✅ closed the same day; its task list and "built as" notes live in git history (`M1-T6` commit) and in Decisions #11–#36.
+**Last finished:** **M2 – Pieces on the Board** ✅ closed 2026-10-21 with M2-T6 Move a hero by clicking (`AreaPick` channel, hero select/deselect, neighbour-only moves with capacity, looks painted from the controller's selection; Decisions #58–#65). M2 task list and "built as" notes live in git history (`M2-T6` commit) and in Decisions #37–#65. **M1 – The Board** ✅: `M1-T6` commit and Decisions #11–#36.
 
 #### Milestones
 
@@ -155,7 +144,7 @@ Older optional leftovers from M1: T6, the Append's "Hit:" has no trailing space 
 |---|---|---|---|---|
 | M0 | **Setup** | ✅ 2026-10-14 | Empty UE 5.8 project in version control, folders & naming set, MCP connected (read-only) | Project creation, plugins, Git LFS + `.gitignore`, folder/naming conventions, editor preferences & console commands |
 | M1 | **The Board** | ✅ 2026-10-16 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
-| M2 | **Pieces on the Board** | 🔄 | 2 hero placeholders + 3 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
+| M2 | **Pieces on the Board** | ✅ 2026-10-21 | 2 hero placeholders + 3 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
 | M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
 | M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events) |
@@ -302,6 +291,15 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Tolerance**: the small margin you accept as "the same", e.g. 0.1 cm in `IsNeighbour`.
 - **XOR (exclusive or)**: true when exactly one of two inputs is true, false when both or neither are. Tried in `IsNeighbour`; it rejected corners but let "touching line, but a gap" through.
 - **Collision Handling Override**: what Spawn Actor does if something is already in the spot: spawn anyway, nudge the actor aside, or give up. DarkDungeon uses "Try To Adjust Location, But Always Spawn".
+- **Custom trace channel**: a "kind of ray" you add yourself (Project Settings → Engine → Collision → Trace Channels). `AreaPick` has Default Response **Ignore**, so only components that opt in (the Areas' cubes, set to Block) are hit by it, and units never block Area picking. Saved in `Config/DefaultEngine.ini`.
+- **Visibility channel**: a built-in trace channel. Despite the name it has nothing to do with what's drawn on screen: a hidden mesh with collision can block it, a visible one with NoCollision can't.
+- **Multi trace**: a trace that reports everything it passes through. It still stops at the first **Block**; only **Overlap** responses let it continue.
+- **Hit Component vs Hit Actor**: a ray physically hits a component (`TopCube`); the Hit Result also gives the actor that owns it (`BP_Area`). Casts read the actor.
+- **Equal (Object) `==`**: compares two references: true when both point at the same actor (or both are None). Used to detect "clicked the same hero / Area again".
+- **Selection state**: what the player has selected, kept in variables between clicks (`SelectedUnit`, `SelectedArea` on the controller). It must survive the click; wiping it at the end of every click makes "same as before" impossible.
+- **Source of truth**: the one place that owns a fact; everything else asks it. Selection → the controller's variables; the looks are painted *from* them; "is this unit already in an Area?" → the Area's `UnitsInArea`, not the unit's `CurrentArea`.
+- **Find References / Find in Blueprints**: right-click a function or variable in My Blueprint → Find References lists every node that uses it in this Blueprint; the binoculars (Ctrl+Shift+F) search all Blueprints.
+- **Collapse to Function / Collapse Nodes / Comment box**: Collapse to Function turns selected nodes into a real function (inputs, outputs, locals, reusable). Collapse Nodes only packs them into a grey box (visual only). A comment box (select nodes, press C) is a labelled frame.
 
 **Our game's terms**
 - **Area**: one rectangle of the board. It has a capacity (how many units fit) and neighbors (rectangles sharing an edge).
