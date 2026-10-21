@@ -225,3 +225,14 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Moved `Team` into both children to fix "two sources of truth", which made two separate variables.
   - Read "use Text for Name" as "drop the name for an enum of unit types".
   - First sketch left out Speed and Look. Built the M5 ability/move templates early.
+
+**2026-10-21 · M3-T2 · The four MVP units as data** ✅
+- **Learned:**
+  - **Different values → a `DA_`; different fields → a child class.** Warrior and Archer fill in the same hero form, so they're Data Assets made from `PDA_Hero`, not children of it.
+  - A Data Asset only shows fields that are Instance Editable. A Class Default on `PDA_Enemy` (`Team` = Enemy) fills in every enemy `DA_` for free.
+  - **Mesh vs Transform:** the mesh is only the shape (a 1 m cube). The tall block comes from the component's Scale (0.6/0.6/1.8) inside `BP_Unit`, so the `DA_` holds the plain Cube.
+  - Copy/paste a property: right-click the field → Copy, right-click the target field → Paste.
+  - Renamed for clarity: `MaxHealth` → `BaseMaxHealth`, `Name` → `DisplayName`, `PDA_Move` → `PDA_EnemyMove`, `PDA_Ability` → `PDA_HeroAbility`. Moves went through the Content Browser, so no leftover redirectors.
+- **Tripped up:**
+  - Expected Warrior/Archer to be child classes of `PDA_Hero`.
+  - The HP numbers first landed in `DisplayName`, leaving `BaseMaxHealth` at 0 on all four.

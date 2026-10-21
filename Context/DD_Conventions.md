@@ -13,10 +13,11 @@ Content/
 ├── DarkDungeon/        ← everything we make
 │   ├── Core/           game-wide setup: Game Mode, Player Controller, camera
 │   ├── Board/          Areas and room layouts
-│   ├── Units/          what heroes and enemies share: BP_Unit, E_Team, unit materials
+│   ├── Units/          what heroes and enemies share: BP_Unit, PDA_Unit, E_Team
+│   │   ├── Heroes/     PDA_Hero, PDA_HeroAbility, hero material, DA_ files
+│   │   │   └── Warrior/   only once a hero has its own files (mesh, material, abilities) → DA_Warrior moves in
+│   │   └── Enemies/    PDA_Enemy, PDA_EnemyMove, enemy material, DA_ files (Ghoul/ etc. same rule)
 │   ├── Combat/         battle clock, turn flow, base for all abilities
-│   ├── Heroes/         one subfolder per hero: Warrior/, Archer/ (its data + abilities)
-│   ├── Enemies/        one subfolder per enemy: Ghoul/, Cultist/
 │   ├── UI/
 │   ├── Input/          (create when needed)
 │   ├── Maps/           levels (create when needed)
