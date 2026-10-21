@@ -263,3 +263,14 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Renaming tags in the Project Settings tag tree left 8 **tag redirects** in the `.ini` (`Unit.Hero.Unit.Hero.Warrior_` → …, one pointing to itself). Nothing uses those old names.
   - Thought the task wanted option A (tag replaces `E_Team`). It only asked for a choice, and B was fine.
   - Thought tags had been added to the roadmap late. They were in M3 from the first draft. Only the "tag the units" wording was new.
+
+**2026-10-21 · M3-T5 · Soft vs hard references** ✅
+- **Learned:**
+  - A **hard reference** loads its target whenever the holder loads. A **soft reference** stores only a path and loads nothing until asked. Switched `PDA_Unit.StaticMesh`/`Material` to soft; the four DAs kept their values.
+  - **Async Load Asset** has two exits: **then** fires immediately with nothing loaded, **Completed** fires on a later frame. BeginPlay itself still ends in one frame; the game keeps drawing (with the component's default grey cube) instead of freezing. **Load Asset Blocking** is the freezing version (a hitch).
+  - **Latent nodes** (clock icon) only work in the Event Graph, so the look moved from the Construction Script to BeginPlay.
+  - Completed hands back a plain Object, so it needs a Cast (StaticMesh, MaterialInterface). The DMI must be made after the material arrives.
+  - Reference Viewer filters show the DA's mesh and material as soft only.
+- **Tripped up:**
+  - PIE stopped working once the variables were soft, because the Construction Script still fed them to Set Static Mesh. First tried the wrong pins, then hit a compile error until the code moved to BeginPlay with Async Load Asset.
+  - Size Map showed no difference: `BP_Unit`'s `Cube` component still hard-references the engine Cube, and the assets are tiny and already loaded in the editor.
