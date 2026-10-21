@@ -126,12 +126,20 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 - [x] **T1 – Unit data shape.** ✅ 2026-10-21. Built as: Data Assets. `PDA_Unit` (Primary Data Asset) holds `MaxHealth` (Int), `Name` (Text), `Team` (`E_Team`), `StaticMesh`, `Material` (Material Interface). Its empty children are `PDA_Hero` and `PDA_Enemy`. Speed moved to the Move action (Decisions #66–#71). M5 drafts are already in `Units/`: `PDA_Ability`, `PDA_Move`, `E_MoveTarget`, `AbilitySet`/`MoveSet` arrays.
 - [x] **T2 – The four MVP units as data.** ✅ 2026-10-21. Built as: `DA_Warrior` (1100) and `DA_Archer` (800) from `PDA_Hero` in `Units/Heroes/`; `DA_Ghoul` (500) and `DA_Cultist` (350) from `PDA_Enemy` in `Units/Enemies/`. All use the engine Cube + `M_HeroUnit` / `M_EnemyUnit`; the size stays on `BP_Unit`'s component. Renamed `BaseMaxHealth`, `DisplayName`, `PDA_EnemyMove`, `PDA_HeroAbility` (Decisions #72–#75).
-- [ ] **T3 – Spawn from data.** The Game Mode spawns each unit with its data; `BP_Unit` reads team, HP and look from it (replaces the Team-only colouring). One test level line-up: Warrior + Archer vs Ghoul, Ghoul, Cultist.
+- [x] **T3 – Spawn from data.** ✅ 2026-10-21. Built as: `BP_BattleGameMode` holds `HeroesRoster` (`PDA_Hero`) and `EnemiesRoster` (`PDA_Enemy`). Per Area it does Switch on `SpawnSide` → `IsValidIndex` → GET with `HeroesSpawned`/`EnemiesSpawned` → `UnitToSpawn` → one Spawn with `UnitData` (Expose on Spawn). `BP_Unit`'s Construction Script sets Team, mesh, material and `CurrentHealth` from it, then makes a Dynamic Material Instance. `PaintUnitState(Selection)` sets the `SelectedGlow` scalar (Desaturation, −0.5 = more saturated) in `M_HeroUnit`/`M_EnemyUnit` (Decisions #76–#81).
 - [ ] **T4 – Gameplay Tags.** Tag units (e.g. `Unit.Hero.Warrior`, `Unit.Enemy.Ghoul`) and decide whether a tag replaces `E_Team` or sits next to it.
 - [ ] **T5 – Soft vs hard references.** Load each unit's look through a soft reference; check the difference in the Reference Viewer / Size Map.
 - [ ] **T6 – See the data in play.** A simple readout above each unit (name + HP) so the data is visible in PIE.
 
-**Next:** M3-T3 – Spawn from data. Keep in mind: Set Static Mesh keeps the component's 0.6/0.6/1.8 Scale (Decisions #75).
+**Next:** M3-T4 – Gameplay Tags.
+
+**T3 cleanup (do before the T3 commit):**
+- `BP_Unit` Construction Script: Is Valid check on `UnitData` (skip applying data when it's None). It stops the "Accessed None … UnitData / DynamicMaterialInstance" warnings from the Blueprint editor's preview actor.
+- `PaintUnitState` Selected exit: remove the extra `Set Material (Cube, DMI)`, because the component version of Create Dynamic Material Instance already put it on the cube. Optional: feed Create DMI the DA's material directly and drop the Construction Script's Set Material.
+- Delete `BP_Unit.UnitState` (unused since `PaintSelection` passes Selected) and the unused assets `M_UnitSelectedOverlay`, `MI_HeroUnit_Selected` and `MI_EnemyUnit_Selected` (check the Reference Viewer first).
+- Rename `SelectedGlow` → `SelectedSaturation` in both materials *and* in `PaintUnitState`. The name must match exactly, or Set Scalar Parameter Value fails silently.
+
+Optional future-proofing (fine to leave): one master material `M_Unit` (colour Vector param + `SelectedSaturation`) with `MI_HeroUnit`/`MI_EnemyUnit` as instances, so the selection effect lives in one graph instead of two; split the spawn loop into a `SpawnUnits` function and the Construction Script body into `ApplyUnitData`; health moves into `BPC_Health` in M5 (#80); the roster moves to the Game Instance and enemies to an encounter DA (#76).
 
 Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` compares `Team` with **Equal (Byte)** vs 0 (use the enum `==` Hero) and its `CastFailed` path has no Return node; `SetUnitLook` still takes a `Team` input the unit already has; the controller's `MoveToArea` shares its name with the unit's (e.g. `TryMoveSelectedHero`); a `UnitPick` trace channel would replace `Visibility` for unit picking; spawn and move could become two functions (Decisions #63). Older: `Input/Test.uasset` (M1-T5) looks like a leftover; M1 notes (Append "Hit:" spacing, `TopCube` Z = 100 note, camera ~65 cm off centre).
 
@@ -267,7 +275,15 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Override (in a Material Instance)**: the checkbox next to each parameter. Unticked (greyed out) = "use the parent's value"; ticked = "this instance uses its own value". Every parameter starts unticked, which is why a fresh MI seems to refuse edits.
 - **Lerp (Linear Interpolate)**: blends between A and B by Alpha: 0 = all A, 1 = all B, 0.5 = halfway. `M_Area` lerps white → blue by `ColorScaling`, so a highlight could later *fade in* by animating Alpha.
 - **Set Material**: a node that puts a different material on one slot (Element Index) of a mesh component at runtime. `SetHighlighted` uses it on `TopCube`.
-- **Dynamic Material Instance**: a Material Instance created *while the game runs*, so you can change its parameters live (e.g. fade `ColorScaling` 0 → 1). The alternative to swapping between ready-made MIs; not used yet.
+- **Dynamic Material Instance (DMI)**: a Material Instance created *while the game runs*, private to one actor, so you can change its parameters live with **Set Scalar Parameter Value**. A normal MI's values are fixed in play and shared by everyone using it. Each `BP_Unit` makes one in its Construction Script so selecting one Ghoul doesn't change the other. Two nodes share the name. Use the component one ("Target is Primitive Component"), which also puts the DMI on the mesh.
+- **Overlay Material**: a second material drawn on top of a mesh's normal one, set or cleared with Set Overlay Material. It can't see the colour underneath, so it can only add light or cover it. Tried for selection in M3-T3, then dropped.
+- **Blend Mode (Additive / Translucent)**: how a material mixes with what's behind it. **Additive** adds its colour (like a torch: only brighter, washing toward white). **Translucent** covers it by **Opacity** (0 = invisible, 1 = solid).
+- **Desaturation (node)**: blends a colour toward grey by Fraction (0 = unchanged, 1 = grey). A **negative** Fraction pushes away from grey, which makes the colour more saturated. That's the selection look in `M_HeroUnit`/`M_EnemyUnit`.
+- **Fresnel**: a material value that's 0 where a surface faces the camera and 1 at its edges (the bright rim on a soap bubble). Used for rim glows.
+- **Actor Component**: a piece of behaviour you attach to an actor, the way `Cube` is a component but holding logic instead of a mesh. Planned: `BPC_Health` in M5.
+- **Game Instance**: the one object that survives level loads. Game Mode, controller and units are rebuilt per level. It's the future home of the hero pool and roster (M7).
+- **Typed array / wildcard lock**: an array of `PDA_Hero` is not an array of `PDA_Unit`, even though one `PDA_Hero` fits a `PDA_Unit` variable. Wildcard nodes (Select, GET) take their type from the first wire and keep it.
+- **Is Valid Index**: true when an array has an item at that index. Guards GET so a too-short roster skips the Area instead of returning None.
 - **Reroute node**: a dot on a wire that only bends it, to keep a graph readable. Does nothing to the logic. Double-click a wire to add one.
 - **Validated Get**: right-click a variable getter → *Convert to Validated Get*. The getter gets Is Valid / Is Not Valid exits built in, which is shorter than a separate Is Valid node.
 - **Switch on (Enum)**: a flow node with one exit per enum value; execution leaves through the exit that matches. `BP_Unit`'s Construction Script uses Switch on `E_Team`: the Hero exit sets the hero material, the Enemy exit sets the enemy one. (**Select** is the data version: it picks one of several *values* instead of one of several exits.)

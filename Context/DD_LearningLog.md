@@ -236,3 +236,19 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - Expected Warrior/Archer to be child classes of `PDA_Hero`.
   - The HP numbers first landed in `DisplayName`, leaving `BaseMaxHealth` at 0 on all four.
+
+**2026-10-21 · M3-T3 · Spawn from data** ✅
+- **Learned:**
+  - **A DA is data, not an actor.** Spawn Actor's Class stays `BP_Unit`. The Game Mode passes the `DA_` through an Expose on Spawn `UnitData` (`PDA_Unit`) pin, and the unit's Construction Script reads team, mesh, material and HP from it.
+  - **Arrays don't convert like single objects.** A `PDA_Hero` fits a `PDA_Unit` variable, but an array of `PDA_Hero` doesn't fit an array of `PDA_Unit`. Fix: pick *one* unit per Switch exit into a `UnitToSpawn` (`PDA_Unit`) variable, then use one shared Spawn node.
+  - A wildcard node (Select) locks its type from the first wire. Retyping the variables later doesn't unlock it.
+  - **"Next item" pattern:** one counter per side (`HeroesSpawned`, `EnemiesSpawned`) plus `IsValidIndex` before GET, instead of a nested For Each, which would spawn every hero in every hero Area.
+  - `CurrentHealth` is a **copy** of `BaseMaxHealth`, because both Ghouls share one DA.
+  - **Uniform vs vest:** the permanent look comes from data, and selection is a temporary change on top. An overlay material can only add light (Additive) or cover (Translucent). It can't see the colour below it, so it can't saturate.
+  - **Desaturation with a negative fraction** pushes colour *away* from grey, which makes it more saturated. Driven by a `SelectedGlow` scalar parameter.
+  - **MI vs DMI:** an MI's values are fixed while the game runs. A Dynamic Material Instance is a private runtime copy that one unit can change with Set Scalar Parameter Value.
+- **Tripped up:**
+  - The Select node over two differently-typed arrays.
+  - `PaintSelection` passed the unit's own `UnitState`, which nothing ever set, so selection always painted Regular (the #60 "second copy" trap again).
+  - There are two nodes called *Create Dynamic Material Instance*. Picked the global one (Parent, no Target) instead of the component one (Target is Primitive Component). Drag from the component to get the right one.
+  - Overlay tried both ways (brighter, then darker) before finding saturation needs the base material.
