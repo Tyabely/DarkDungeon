@@ -252,3 +252,14 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - `PaintSelection` passed the unit's own `UnitState`, which nothing ever set, so selection always painted Regular (the #60 "second copy" trap again).
   - There are two nodes called *Create Dynamic Material Instance*. Picked the global one (Parent, no Target) instead of the component one (Target is Primitive Component). Drag from the component to get the right one.
   - Overlay tried both ways (brighter, then darker) before finding saturation needs the base material.
+
+**2026-10-21 · M3-T4 · Gameplay Tags (identity only)** ✅
+- **Learned:**
+  - A **Gameplay Tag** is a label in a tree (`Unit.Hero.Warrior`), picked from a dropdown, so a typo can't make a new tag. It's stored in `Config/DefaultGameplayTags.ini`, which is a text file, so Git shows tag changes line by line.
+  - **Matches Tag** counts a child as its parent (`Unit.Hero.Warrior` matches `Unit.Hero`). **Matches Tag Exact** only counts the identical tag.
+  - **Enum vs tag:** an enum is one choice from a fixed list and has a Switch node. A tag carries a family tree, and a **Tag Container** can hold several at once. Statuses (Bleed + Buffed together) are where tags pay off (M5).
+  - `GetDebugStringFromGameplayTag` turns a tag into a String for Print. All five spawned units printed the right tag in PIE.
+- **Tripped up:**
+  - Renaming tags in the Project Settings tag tree left 8 **tag redirects** in the `.ini` (`Unit.Hero.Unit.Hero.Warrior_` → …, one pointing to itself). Nothing uses those old names.
+  - Thought the task wanted option A (tag replaces `E_Team`). It only asked for a choice, and B was fine.
+  - Thought tags had been added to the roadmap late. They were in M3 from the first draft. Only the "tag the units" wording was new.

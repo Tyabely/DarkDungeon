@@ -127,14 +127,18 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T1 – Unit data shape.** ✅ 2026-10-21. Built as: Data Assets. `PDA_Unit` (Primary Data Asset) holds `MaxHealth` (Int), `Name` (Text), `Team` (`E_Team`), `StaticMesh`, `Material` (Material Interface). Its empty children are `PDA_Hero` and `PDA_Enemy`. Speed moved to the Move action (Decisions #66–#71). M5 drafts are already in `Units/`: `PDA_Ability`, `PDA_Move`, `E_MoveTarget`, `AbilitySet`/`MoveSet` arrays.
 - [x] **T2 – The four MVP units as data.** ✅ 2026-10-21. Built as: `DA_Warrior` (1100) and `DA_Archer` (800) from `PDA_Hero` in `Units/Heroes/`; `DA_Ghoul` (500) and `DA_Cultist` (350) from `PDA_Enemy` in `Units/Enemies/`. All use the engine Cube + `M_HeroUnit` / `M_EnemyUnit`; the size stays on `BP_Unit`'s component. Renamed `BaseMaxHealth`, `DisplayName`, `PDA_EnemyMove`, `PDA_HeroAbility` (Decisions #72–#75).
 - [x] **T3 – Spawn from data.** ✅ 2026-10-21. Built as: `BP_BattleGameMode` holds `HeroesRoster` (`PDA_Hero`) and `EnemiesRoster` (`PDA_Enemy`). Per Area it does Switch on `SpawnSide` → `IsValidIndex` → GET with `HeroesSpawned`/`EnemiesSpawned` → `UnitToSpawn` → one Spawn with `UnitData` (Expose on Spawn). `BP_Unit`'s Construction Script sets Team, mesh, material and `CurrentHealth` from it, then makes a Dynamic Material Instance. `PaintUnitState(Selection)` sets the `SelectedGlow` scalar (Desaturation, −0.5 = more saturated) in `M_HeroUnit`/`M_EnemyUnit` (Decisions #76–#81).
-- [ ] **T4 – Gameplay Tags.** Tag units (e.g. `Unit.Hero.Warrior`, `Unit.Enemy.Ghoul`) and decide whether a tag replaces `E_Team` or sits next to it.
+- [x] **T4 – Gameplay Tags (identity only).** ✅ 2026-10-21. Built as: `Unit.Hero.Warrior/Archer` and `Unit.Enemy.Ghoul/Cultist` in `Config/DefaultGameplayTags.ini`; `PDA_Unit.GameplayTag` (one Gameplay Tag) filled in on all four DAs; `BP_Unit`'s Construction Script prints it (all five units correct in PIE). The tag sits next to `E_Team` (Decisions #82–#84). Statuses as tags → M5.
 - [ ] **T5 – Soft vs hard references.** Load each unit's look through a soft reference; check the difference in the Reference Viewer / Size Map.
 - [ ] **T6 – See the data in play.** A simple readout above each unit (name + HP) so the data is visible in PIE.
 
-**Next:** M3-T4 – Gameplay Tags.
+**Next:** M3-T5 – Soft vs hard references.
 
-**T3 cleanup (do before the T3 commit):**
-- `BP_Unit` Construction Script: Is Valid check on `UnitData` (skip applying data when it's None). It stops the "Accessed None … UnitData / DynamicMaterialInstance" warnings from the Blueprint editor's preview actor.
+**T4 cleanup (do before the T4 commit):**
+- Delete the 8 junk entries under Project Settings → Gameplay Tags → **Gameplay Tag Redirects**. They're leftovers from renaming tags, and nothing uses the old names.
+- Optional: rename `PDA_Unit.GameplayTag` → `UnitTag` before M5 adds a status container next to it. Rename it in the Blueprint so the four DAs keep their values.
+- Optional: drop the `Invalid DA!` Print (the Blueprint editor's preview actor fires it on every recompile) and remove the tag Print once T6's readout shows the data.
+
+**T3 cleanup leftovers** (Is Valid on `UnitData` ✔ done):
 - `PaintUnitState` Selected exit: remove the extra `Set Material (Cube, DMI)`, because the component version of Create Dynamic Material Instance already put it on the cube. Optional: feed Create DMI the DA's material directly and drop the Construction Script's Set Material.
 - Delete `BP_Unit.UnitState` (unused since `PaintSelection` passes Selected) and the unused assets `M_UnitSelectedOverlay`, `MI_HeroUnit_Selected` and `MI_EnemyUnit_Selected` (check the Reference Viewer first).
 - Rename `SelectedGlow` → `SelectedSaturation` in both materials *and* in `PaintUnitState`. The name must match exactly, or Set Scalar Parameter Value fails silently.
@@ -154,7 +158,7 @@ Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` co
 | M2 | **Pieces on the Board** | ✅ 2026-10-21 | 2 hero placeholders + 3 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ⬜ | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
 | M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
-| M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events) |
+| M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events), statuses as Gameplay Tags (`Status.Bleed`, `Status.Buff.*`) in a Tag Container on the unit (add/remove/has-tag) |
 | M6 | **Enemy AI** | ⬜ | Enemies telegraph & execute intents ("3.5 ⏳ Move + Attack") | Simple decision logic in BP (no Behavior Trees needed), reuse of the ability system |
 | M7 | **Win / Lose & Loop** | ⬜ | Battle ends, restart / next battle | Level/state flow, Game Instance, basic save data |
 | M8 | **Portfolio pass** | ⬜ | Short trailer/GIF, readme, docs cleanup | Sequencer basics (optional), packaging a build |
@@ -265,7 +269,10 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Text vs String**: both hold words. **Text** is for words the player sees, and Unreal can translate it (`PDA_Unit.Name`). **String** is for internal labels and building messages.
 - **Static Mesh vs Skeletal Mesh**: a Static Mesh is a 3D model that never bends (a chess piece). A Skeletal Mesh has bones and can be animated, which needs an Animation Blueprint. DarkDungeon's placeholders are static.
 - **Material Interface**: the variable type that accepts both a Material (`M_`) and a Material Instance (`MI_`). `PDA_Unit.Material` uses it.
-- **Gameplay Tag**: a label like `Status.Bleed` or `Ability.Warrior.Charge`, organized in a tree. Safer than typing text by hand, because a typo can't create a "new" tag by accident.
+- **Gameplay Tag**: a label like `Status.Bleed` or `Ability.Warrior.Charge`, organized in a tree. Safer than typing text by hand, because a typo can't create a "new" tag by accident. Every unit has one (`PDA_Unit.GameplayTag`, e.g. `Unit.Hero.Warrior`). The project's tags live in `Config/DefaultGameplayTags.ini`.
+- **Matches Tag vs Matches Tag Exact**: **Matches Tag** counts a child as its parent, so `Unit.Hero.Warrior` matches `Unit.Hero` (true). **Exact** only counts the identical tag, so the same check is false. Use the parent check for "is this any hero?".
+- **Gameplay Tag Container**: a list of tags that one thing carries at once, e.g. a unit that is `Status.Bleed` *and* `Status.Buff.Armor`. It has add, remove and "has tag" nodes. Planned for statuses in M5.
+- **Gameplay Tag Redirect**: a "forwarding address" from an old tag name to a new one. Unreal writes one when you rename a tag, so assets still using the old name keep working. Remove redirects once nothing uses the old names.
 - **UMG** (Unreal Motion Graphics): Unreal's tool for building UI: buttons, health bars, the timeline.
 - **Class vs instance vs reference**: the class `BP_Area` is the house plan; `Area_7` in the level is one house built from it (an instance); an object reference is that house's street address. A Cast never *chooses* which house. It only checks that the address you already hold is a `BP_Area` house.
 - **Material (`M_`)**: the recipe for how a surface looks (colour, shine, roughness), built as a node graph that ends in outputs like Base Color. `M_Area` colours the Areas' `TopCube`.
