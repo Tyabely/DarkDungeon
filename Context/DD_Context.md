@@ -124,14 +124,20 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 **M4 – The Time System** · 🔄 in progress. Goal: one shared battle clock. A hero action pushes it forward by its cost, enemy actions are scheduled on it and land in order, and a timeline UI shows what's coming (GDO §4.1).
 *(Draft task list, written when M3 closed. Change it freely as M4 goes. T3–T4 are branchy: sketch a Miro flowchart first.)*
 
-- [ ] **T1 – The battle clock.** A Game State (`BP_BattleGameState`) owns the current battle time, shown on screen by a simple widget. Decide how time is stored (Float seconds vs Int tenths, the open question in #71).
+- [x] **T1 – The battle clock.** ✅ 2026-10-24. `BP_BattleGameState` (GameStateBase) owns `CurrentTimeTenths` (Int, tenths of a second), set as the Game Mode's Game State Class. `WBP_BattleClock` shows it as "2.5s" (Decisions #91–#93).
 - [ ] **T2 – Actions cost time.** A hero Move pushes the clock forward by its cost (e.g. 1s per Area, GDO §4.3), and the clock announces "time moved" with an Event Dispatcher.
 - [ ] **T3 – Enemies on the timeline.** Each enemy holds its next action and the time it lands (placeholder action, e.g. a Print). When the clock passes that time, the action resolves.
 - [ ] **T4 – Land in order.** When one hero action jumps the clock past several enemy actions, they resolve in time order, and the GDO §4.1 example (Ghoul's 3s attack vs a 4s Slash) plays out right.
 - [ ] **T5 – Timeline UI.** A widget lists the upcoming enemy actions with seconds left ("Ghoul · 3.0s").
 - [ ] **T6 – Debugging pass.** Track down one timeline bug with breakpoints, Print and the Visual Logger.
 
-**Next:** M4-T1 – The battle clock.
+**Next:** M4-T2 – Actions cost time. The "time moved" dispatcher lives on `BP_BattleGameState` (the clock announces, the widget listens). You worked that out yourself in T1.
+
+**Open from M4-T1:**
+- `CurrentTimeTenths`'s default is still **25** from the test. Set it back to 0.
+- The clock widget is created inside the camera's **Is Valid** branch of the controller's BeginPlay, so a level with no camera would also have no clock. Move it after the branch.
+- The `Create Widget` result isn't stored. T2 needs it (Promote to Variable), or the widget can bind to the dispatcher itself.
+- The controller still has an empty `UpdateBattleClock_Event`, and the Game State cast's Cast Failed pin is unwired.
 
 **Carried over from M3 (fine to leave):**
 - T6: `WBP_HealthBar` sits in `Units/`; Conventions put widgets in `UI/`. The label's text-shadow / bar-colour polish is open. HP is pushed once in BeginPlay, so damage (M5) must call `SetUnitInfo` again or swap to a dispatcher.
@@ -151,7 +157,7 @@ Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` co
 | M1 | **The Board** | ✅ 2026-10-16 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
 | M2 | **Pieces on the Board** | ✅ 2026-10-21 | 2 hero placeholders + 3 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ✅ 2026-10-24 | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
-| M4 | **The Time System** | ⬜ | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
+| M4 | **The Time System** | 🔄 | Timeline UI shows upcoming enemy actions; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
 | M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events), statuses as Gameplay Tags (`Status.Bleed`, `Status.Buff.*`) in a Tag Container on the unit (add/remove/has-tag) |
 | M6 | **Enemy AI** | ⬜ | Enemies telegraph & execute intents ("3.5 ⏳ Move + Attack") | Simple decision logic in BP (no Behavior Trees needed), reuse of the ability system |
 | M7 | **Win / Lose & Loop** | ⬜ | Battle ends, restart / next battle | Level/state flow, Game Instance, basic save data |
@@ -225,7 +231,7 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Function vs Event**: both are "do this" blocks. A **Function** runs instantly and can return an answer ("what's the distance between these two Areas?"). An **Event** is a reaction to something happening ("when clicked…") and can't return an answer.
 - **Variable / Array / Struct / Enum**: a Variable is a labeled box holding one value (HP = 500). An Array is a list of boxes (all enemies in the room). A Struct is a bundle of different values that belong together (an ability's name + cost + damage range). An Enum is a fixed list of choices (Target: Closest / Furthest / Lowest HP).
 - **Enumeration asset / Enumerator**: in UE you create your own enum as an asset (Content Browser → Blueprint → Enumeration, prefix `E_`, e.g. `E_SpawnSide`). Each choice inside it is an *enumerator* (None, Hero, Enemy). A new variable of that type starts on the **first** enumerator, so put the "nothing / default" choice first. Better than two booleans (both could be true) or a number code (`2` means nothing to a reader, and `7` is allowed).
-- **Game Mode / Game State**: Game Mode holds the *rules* of the match ("battle starts when…, you lose when…"). Game State holds the *current situation* everyone can read ("the clock is at 12.5s").
+- **Game Mode / Game State**: Game Mode holds the *rules* of the match ("battle starts when…, you lose when…"). Game State holds the *current situation* everyone can read ("the clock is at 12.5s"). The Game Mode creates the Game State named in its **Game State Class** setting. Base goes with Base: a GameModeBase needs a **GameStateBase** child, or it only warns and doesn't work properly. Any Blueprint reaches it with **Get Game State** → Cast To `BP_BattleGameState`.
 - **Player Controller**: the Blueprint that represents *you*, the person at the keyboard. It turns mouse clicks into game commands like "select this Area".
 - **Player State**: a small actor the Game Mode creates for every player to hold info *about* that player (name, score). Unreal won't let a player join without one, which is why the "pawnless" `NoPawnPlayerController` failed with "PlayerState is null".
 - **Reparent**: changing which parent class a Blueprint is built on (Class Settings → Parent Class). Used in T4 to move `BP_BattlePlayerController` from `NoPawnPlayerController` to plain `PlayerController`.
@@ -281,6 +287,11 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Desired size / Draw at Desired Size**: a widget's desired size is the room its contents ask for (two lines of text + a bar). With Draw at Desired Size the component draws exactly that, instead of a fixed Draw Size like 500×500.
 - **Canvas Panel / Anchors**: a Canvas Panel is a screen-sized corkboard where each child is pinned at a Position and Size; **Anchors** say which point of the screen a child sticks to when the screen resizes ("bottom centre"). Right for full-screen HUDs (the M4 timeline), wrong for a small self-sizing card, because it has no desired size of its own.
 - **Vertical Box / Overlay**: layout panels. A **Vertical Box** stacks children top to bottom like a list and is as big as they need. An **Overlay** stacks them on top of each other (text over a bar).
+- **Horizontal Box / Border / Size Box**: more layout panels. A **Horizontal Box** lines children up left to right (hourglass, then time). A **Border** holds one child and has its own background (Brush Color, Padding), so it's the easy way to put a dark panel behind text. A **Size Box** forces its one child to a set width/height.
+- **Slot (UMG)**: the **Slot** section at the top of a widget's Details is the *parent's* rules for placing that child: Padding, Size (Auto/Fill), alignment, and Anchors inside a Canvas Panel. Move the widget into a different panel and the Slot options change.
+- **Brush Image Size**: an Image's own size (Appearance → Brush, 32×32 by default). It's separate from font size, which is why making the text bigger left the hourglass small.
+- **DPI scaling**: Unreal shrinks or grows all UI to match the screen size (Project Settings → User Interface). A small Play viewport makes the UI look smaller than in the Designer, so set the Designer preview to 1920×1080 and judge sizes in play.
+- **To Text (Float) / Format Text**: To Text (Float) turns a number into display text; under its ▼ arrow, **Minimum/Maximum Fractional Digits** = 1 always shows one decimal ("3.0", not "3"). **Format Text** fills a template: `{Time}s` grows a `Time` pin, giving "2.5s".
 - **Is Variable (widget)**: a checkbox on a widget in the Designer. Ticked, Unreal makes a member variable of the same name (`HealthBar`) that the Graph can use, e.g. → Set Percent. You don't create it by hand.
 - **Property binding (UMG)**: the **Bind** dropdown next to a widget field (Text, Percent) that links it to a function the widget runs **every frame** (pull). Deleting the function leaves the binding pointing at nothing, and the Blueprint won't compile until you **Remove Binding**.
 - **Push vs pull**: *pull* = the widget keeps asking for the value (a binding, or Tick). *Push* = whoever owns the data hands it over when it changes (`BP_Unit` calls `SetUnitInfo`). Push does no work while nothing changes.
@@ -320,6 +331,7 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Lookup table**: data you look up instead of calculating. `Layouts` row N − 1 holds the slot positions for N units: one table, one loop, no Switch per case.
 - **Get (a copy) vs Get (a ref)**: both read the item at an index. **A copy** hands you a duplicate, so changing it leaves the array alone; **a ref** hands you the item itself, so changes (e.g. Set Members on a struct) go into the array. For object references (`BP_Unit`) both point to the same actor anyway; it matters for structs, vectors and numbers.
 - **Integer division**: dividing whole numbers throws the fraction away: (2 − 1) / 2 = 0, not 0.5. Convert to float before dividing when the fraction matters.
+- **Float precision / storing time in tenths**: a float can't hold 0.1 exactly (it's stored as 0.1000000015), so adding 0.1 thirty times may give 2.9999998, not 3.0, and "has the clock reached 3.0?" can wrongly say no. Storing whole tenths in an Integer (25 = 2.5s) is always exact, like a shop that keeps prices in cents and only adds the decimal point on the price tag. `CurrentTimeTenths` works this way.
 - **Rotate Vector Around Axis**: turns a vector by an angle around an axis. Axis (0, 0, 1) = around "up". `ArrangeUnits` rotates the slot layout 90° when an Area is longer in Y. With Axis (0, 0, 0) there's nothing to rotate around.
 - **Set Actor Location vs Set Actor Relative Location**: Relative is measured from the parent the actor is attached to; an unattached actor's "relative" is the world. Units aren't attached to Areas, so use Set Actor Location with Area centre + offset.
 - **Event Tick**: runs every frame. The node's mere presence makes the actor tick, even with nothing wired to it, so delete unused ones.

@@ -288,3 +288,18 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - `SetUnitInfo` first returned its values instead of setting the widgets.
   - Deleting `GetText`/`GetPercent` left two dangling bindings, so the widget wouldn't compile until Remove Binding.
   - The component was scaled 0.07/0.4/0.07, which squashed the World-space card; reset to 1 once it moved to Screen space.
+
+**2026-10-24 · M4-T1 · The battle clock** ✅
+- **Learned:**
+  - **Float precision**: 0.1 can't be stored exactly in a float, so time is kept in whole tenths (Int). Seconds only appear on screen.
+  - **Game State** = the shared current situation. The Game Mode creates it from **Game State Class**, and a GameModeBase needs a GameState**Base**.
+  - **Cast** in plain words: Get Game State only promises "some Game State", and the Cast checks "are you *my* `BP_BattleGameState`?" before you can read `CurrentTimeTenths`. **Self** is just the Blueprint you're in.
+  - **Create Widget already returns the typed `WBP_`**, so it needs no Get Widget or Cast. Those were only needed for the Widget Component in M3-T6.
+  - **UMG Designer**: panels vs widgets, **Slot** = the parent's rules for a child, Border for a background, Brush Image Size vs font size, DPI scaling makes the small Play viewport look smaller than the Designer.
+  - Int → **To Float** before ÷ 10, then To Text (Float) with 1 min/max fractional digit and Format Text `{Time}s`.
+  - Reasoned out on your own that the "time moved" dispatcher belongs on the Game State (the one who announces), with the widget as a listener.
+- **Tripped up:**
+  - First name idea `ClockIncrement` described the step size, not the running total. Renamed to `CurrentTimeTenths`.
+  - Copied the M3 health-bar pattern (`Widget` → Get Widget → Cast To `WBP_BattleClock`) into the controller, and fed **Self** into Cast To `BP_BattleGameState` (the orange WARNING).
+  - The Overlay had no colour of its own, and a bigger font didn't make the icon bigger.
+  - Started the dispatcher early, on the controller. Parked for T2.
