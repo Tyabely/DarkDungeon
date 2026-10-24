@@ -274,3 +274,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - PIE stopped working once the variables were soft, because the Construction Script still fed them to Set Static Mesh. First tried the wrong pins, then hit a compile error until the code moved to BeginPlay with Async Load Asset.
   - Size Map showed no difference: `BP_Unit`'s `Cube` component still hard-references the engine Cube, and the assets are tiny and already loaded in the editor.
+
+**2026-10-24 · M3-T6 · See the data in play** ✅
+- **Learned:**
+  - A **Widget Blueprint** is the layout + logic of one piece of UI; a **Widget Component** puts it on an actor. Inside the widget, **Self is the widget**, so Cast Self To `BP_Unit` can never succeed.
+  - **Push, not pull:** `BP_Unit`'s BeginPlay does Get Widget → Cast To `WBP_HealthBar` → `SetUnitInfo`. Property bindings and Tick both re-ask every frame for values that don't change. An Event Dispatcher isn't needed while one owner talks to one widget.
+  - Ticking **Is Variable** on a widget makes the member variable for you. A function that should change the screen must **Set** (Set Text, Set Percent), not just Return values.
+  - **Space = Screen** + **Draw at Desired Size**: the label always faces the camera and sizes itself to its contents. No rotation logic. A Canvas Panel has no desired size, so it's for full-screen HUDs.
+  - Convert Int → Float **before** dividing for the bar's Percent (integer division would give 0).
+- **Tripped up:**
+  - Cast Self To `BP_Unit` inside the widget (the orange WARNING on the Cast).
+  - Tried to aim a World-space widget at the camera with `Get Actor Of Class` + Find Look at Rotation on Tick, rotating `HealthBarComponent` but measuring from `Plane`.
+  - `SetUnitInfo` first returned its values instead of setting the widgets.
+  - Deleting `GetText`/`GetPercent` left two dangling bindings, so the widget wouldn't compile until Remove Binding.
+  - The component was scaled 0.07/0.4/0.07, which squashed the World-space card; reset to 1 once it moved to Screen space.
