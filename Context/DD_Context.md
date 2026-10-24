@@ -125,19 +125,19 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 *(Draft task list, written when M3 closed. Change it freely as M4 goes. T3–T4 are branchy: sketch a Miro flowchart first.)*
 
 - [x] **T1 – The battle clock.** ✅ 2026-10-24. `BP_BattleGameState` (GameStateBase) owns `CurrentTimeTenths` (Int, tenths of a second), set as the Game Mode's Game State Class. `WBP_BattleClock` shows it as "2.5s" (Decisions #91–#93).
-- [ ] **T2 – Actions cost time.** A hero Move pushes the clock forward by its cost (e.g. 1s per Area, GDO §4.3), and the clock announces "time moved" with an Event Dispatcher.
+- [x] **T2 – Actions cost time.** ✅ 2026-10-24. `BP_BattleGameState.AdvanceClock(BattleClockIncrease)` is the only way to change the time: Add → SET → `Call OnClockAdvanced(NewTimeTenths)`. A successful `BP_Unit.MoveToArea` calls it with `BaseCostMove` = 10 (1s). `WBP_BattleClock` binds in Event Construct and refreshes via `SetClockInfo` (Decisions #94–#97).
 - [ ] **T3 – Enemies on the timeline.** Each enemy holds its next action and the time it lands (placeholder action, e.g. a Print). When the clock passes that time, the action resolves.
 - [ ] **T4 – Land in order.** When one hero action jumps the clock past several enemy actions, they resolve in time order, and the GDO §4.1 example (Ghoul's 3s attack vs a 4s Slash) plays out right.
 - [ ] **T5 – Timeline UI.** A widget lists the upcoming enemy actions with seconds left ("Ghoul · 3.0s").
 - [ ] **T6 – Debugging pass.** Track down one timeline bug with breakpoints, Print and the Visual Logger.
 
-**Next:** M4-T2 – Actions cost time. The "time moved" dispatcher lives on `BP_BattleGameState` (the clock announces, the widget listens). You worked that out yourself in T1.
+**Next:** M4-T3 – Enemies on the timeline. Branchy: sketch a Miro flowchart first. Enemies can *listen* to `OnClockAdvanced` exactly like the widget does.
 
-**Open from M4-T1:**
-- `CurrentTimeTenths`'s default is still **25** from the test. Set it back to 0.
-- The clock widget is created inside the camera's **Is Valid** branch of the controller's BeginPlay, so a level with no camera would also have no clock. Move it after the branch.
-- The `Create Widget` result isn't stored. T2 needs it (Promote to Variable), or the widget can bind to the dispatcher itself.
-- The controller still has an empty `UpdateBattleClock_Event`, and the Game State cast's Cast Failed pin is unwired.
+**Open from M4-T2:**
+- **Fix before enemies move:** `AdvanceClock` is called inside `BP_Unit.MoveToArea`, which every unit uses. Once an enemy moves (T3 placeholder actions, M6 AI), it would push the clock too. Only a *player* action costs time, so the call belongs where the player acts, e.g. the controller's `MoveToArea` after `bMoveToAreaSuccessed` is true (#97).
+- `BaseCostMove` is a variable on `BP_Unit`. When Move escalates (+0.5 per use, GDO §4.3, M5) it should come from hero data (`PDA_Hero` or the Move ability).
+- The start value is still pushed by the controller (`SetClockInfo` with `GetCurrentTimeTenths`). The widget could do that itself in Event Construct, right after its cast. Then the controller only creates the widget and doesn't need `ClockWidgetReference`. Optional.
+- The Cast Failed pins (controller, widget, unit) are unwired. A Print String there would explain a blank clock. Fine to leave.
 
 **Carried over from M3 (fine to leave):**
 - T6: `WBP_HealthBar` sits in `Units/`; Conventions put widgets in `UI/`. The label's text-shadow / bar-colour polish is open. HP is pushed once in BeginPlay, so damage (M5) must call `SetUnitInfo` again or swap to a dispatcher.
@@ -261,6 +261,9 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Pure vs impure function**: a **pure** function has no white exec pins and re-runs every time something reads its output (fine for maths). An **impure** one runs once, at a clear point in the exec chain. Use impure for questions about the world at a specific moment, like a trace.
 - **Get Display Name vs Get Object Name**: Display Name gives the Outliner label in the editor (`Area_9`). Object Name gives the internal name (`BP_Area_C_5`).
 - **Event Dispatcher**: a "shout". One Blueprint shouts "enemy died!" and anyone who signed up to listen reacts. The shouter doesn't need to know who's listening.
+  - **Call** = the shout itself (`Call OnClockAdvanced` inside `AdvanceClock`). **Bind** = signing up to listen (`WBP_BattleClock` binds in Event Construct, and its `UpdateClock` event runs on every shout). The shouter never binds to itself.
+  - **Dispatcher input (payload)**: a value carried with the shout, added under the dispatcher's Details → Inputs. `OnClockAdvanced` carries `NewTimeTenths`, so listeners don't have to go ask the Game State. Add inputs *before* binding: the listener's custom event copies them when it's created.
+- **Event Construct**: a widget's version of BeginPlay. It runs once, when the widget is created.
 - **Interface**: a promise that several different Blueprints understand the same message. E.g. "TakeDamage" works on heroes and enemies alike, without asking "are you a hero or an enemy?" first.
 - **Casting (Cast To X)**: asking "are you specifically a `BP_Ghoul`?" before talking to something. On success the node hands you the same thing *as that class*, so you can use its own variables and functions; otherwise it takes the **Cast Failed** exit. T6 uses Cast To BP_Area as the "only Areas count" filter. Useful sometimes; chains of casts make Blueprints fragile, which is why Interfaces and Dispatchers exist.
 - **Data Asset / Data Table**: files that hold *data only*, no logic. E.g. "Warrior: HP 1100, abilities Slash/Cleave/…". Changing a number means editing data, not rewiring Blueprints. A **Data Table (`DT_`)** is one spreadsheet: every row has the same columns, which come from a struct. A **Data Asset (`DA_`)** is one file per thing, filled in from a template. The data is **shared**: both Ghouls read the same `DA_Ghoul`, so it holds `BaseMaxHealth`, and the HP that drops when hit lives on each `BP_Unit`.

@@ -303,3 +303,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Copied the M3 health-bar pattern (`Widget` → Get Widget → Cast To `WBP_BattleClock`) into the controller, and fed **Self** into Cast To `BP_BattleGameState` (the orange WARNING).
   - The Overlay had no colour of its own, and a bigger font didn't make the icon bigger.
   - Started the dispatcher early, on the controller. Parked for T2.
+
+**2026-10-24 · M4-T2 · Actions cost time** ✅
+- **Learned:**
+  - Reasoned out (L0) that one Game State function should be the only way to change the time: **one owner, one way in**.
+  - **Dispatcher, both ends**: **Call** shouts (inside `AdvanceClock`), **Bind** signs up (in the widget). The shouter doesn't bind to itself.
+  - **Dispatcher inputs** are added in the dispatcher's Details → Inputs, and the SET node's output pin is the fresh value to send.
+  - A dispatcher only shows in the right-click menu when you drag from a pin of the owner's type, so the widget first needs Get Game State → Cast.
+  - **Event Construct** = a widget's BeginPlay.
+  - Only a successful move costs time (the call sits on the success path).
+- **Tripped up:**
+  - The Game State first bound to its own dispatcher with an empty event (shouter listening to itself).
+  - Couldn't find the dispatcher inside the widget (no typed Game State reference yet).
+  - Function and dispatcher names first said "Update", which doesn't say *add*. Renamed to `AdvanceClock` / `OnClockAdvanced`.
+  - (Claude's slip) The MCP text view looked like the widget was created only when there's a camera. Both branches actually join, so that T1 leftover was already fine.
