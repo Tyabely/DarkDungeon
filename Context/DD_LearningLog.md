@@ -317,3 +317,19 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Couldn't find the dispatcher inside the widget (no typed Game State reference yet).
   - Function and dispatcher names first said "Update", which doesn't say *add*. Renamed to `AdvanceClock` / `OnClockAdvanced`.
   - (Claude's slip) The MCP text view looked like the widget was created only when there's a camera. Both branches actually join, so that T1 leftover was already fine.
+
+**2026-10-25 · M4-T3 · Enemies on the timeline** ✅
+- **Learned:**
+  - Applied the M3 rule "different fields → a child class" to actors: `BP_EnemyUnit` under `BP_Unit`. **Call to Parent Function** keeps the parent's BeginPlay (look, HP) running in the child.
+  - A cast can't separate heroes from enemies when both are `BP_Unit`s. The controller already knows the player acted, so the clock call moved there.
+  - **Spawn Actor's extra pins come from the type of the Class wire.** A wildcard Select made it "any Actor" and the pins vanished; a `BP_Unit` **Class Reference** brought them back.
+  - Collapsed the spawn branches into a `SpawnUnit` function with local variables.
+  - Designed the enemy clock yourself in Miro: absolute due time, `<=`, reschedule from the old due time. The log proved it exact: with 1s moves and a 2.5s action, attacks at 3s, 5s, 8s, 10s.
+  - An actor binds to a dispatcher exactly like a widget does, just in BeginPlay.
+- **Tripped up:**
+  - First warm-up: a Switch on `Team` inside `BP_Unit.MoveToArea`; its Enemy exit had no Return node, so an enemy's move would have returned false.
+  - Considered casting to tell heroes from enemies.
+  - Wrong wires after the spawn change made the heroes disappear for a while.
+  - Couldn't find `OnClockAdvanced` in `BP_EnemyUnit` until the Cast (same lesson as T2).
+  - `OnClockTick` re-reads the clock through a second cast instead of using its `NewTimeTenths` pin.
+  - (Claude's slip) MCP read the `IA_Select` event as empty, so Claude reported the `AdvanceClock` call missing. It was there.

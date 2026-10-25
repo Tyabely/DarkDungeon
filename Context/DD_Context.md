@@ -126,16 +126,22 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 - [x] **T1 – The battle clock.** ✅ 2026-10-24. `BP_BattleGameState` (GameStateBase) owns `CurrentTimeTenths` (Int, tenths of a second), set as the Game Mode's Game State Class. `WBP_BattleClock` shows it as "2.5s" (Decisions #91–#93).
 - [x] **T2 – Actions cost time.** ✅ 2026-10-24. `BP_BattleGameState.AdvanceClock(BattleClockIncrease)` is the only way to change the time: Add → SET → `Call OnClockAdvanced(NewTimeTenths)`. A successful `BP_Unit.MoveToArea` calls it with `BaseCostMove` = 10 (1s). `WBP_BattleClock` binds in Event Construct and refreshes via `SetClockInfo` (Decisions #94–#97).
-- [ ] **T3 – Enemies on the timeline.** Each enemy holds its next action and the time it lands (placeholder action, e.g. a Print). When the clock passes that time, the action resolves.
+- [x] **T3 – Enemies on the timeline.** ✅ 2026-10-25. Enemies spawn as **`BP_EnemyUnit`** (child of `BP_Unit`), which binds to `OnClockAdvanced` in BeginPlay (after Parent: BeginPlay). `OnClockTick`: if `InternalClockTenths + BaseActionCost <= clock` → Print attack, then `InternalClockTenths += BaseActionCost` (next action starts at the old due time). The Game Mode's new `SpawnUnit` function picks the class through a `BP_Unit` Class Reference local. `AdvanceClock` moved to the controller's `IA_Select` success path (Decisions #98–#102).
 - [ ] **T4 – Land in order.** When one hero action jumps the clock past several enemy actions, they resolve in time order, and the GDO §4.1 example (Ghoul's 3s attack vs a 4s Slash) plays out right.
 - [ ] **T5 – Timeline UI.** A widget lists the upcoming enemy actions with seconds left ("Ghoul · 3.0s").
 - [ ] **T6 – Debugging pass.** Track down one timeline bug with breakpoints, Print and the Visual Logger.
 
-**Next:** M4-T3 – Enemies on the timeline. Branchy: sketch a Miro flowchart first. Enemies can *listen* to `OnClockAdvanced` exactly like the widget does.
+**Next:** M4-T4 – Land in order. Branchy: extend the T3 Miro sketch first. Three questions: (1) per-enemy costs (the Ghoul's 3s) need the action to come from data, e.g. cycling `MoveSet` with a `CurrentMoveIndex` and modulo; (2) one jump can pass *two* of the same enemy's actions, but `OnClockTick` resolves at most one; (3) every enemy listens on its own, so they resolve in the order they bound, not in time order. Who decides the order?
+
+**Open from M4-T3:**
+- `OnClockTick` ignores its `NewTimeTenths` input and casts to the Game State again to read the time. Use the pin; the cast can go (#95).
+- `SetBaseActionCost 25` after the attack writes the value it already has. It's the placeholder for "pick the next action" and goes away with `MoveSet` cycling (T4).
+- Every enemy uses the class default (25 = 2.5s), so all three attack in the same moment.
+- The Print uses Get Display Name (`BP_EnemyUnit0`) with no space before "PERFORMS"; `UnitData`'s `DisplayName` would say "Ghoul". Fine to leave.
+- `BP_EnemyUnit` sits in `Units/`; Conventions put enemy-only things in `Units/Enemies/`. Move it through the Content Browser when convenient.
 
 **Open from M4-T2:**
-- **Fix before enemies move:** `AdvanceClock` is called inside `BP_Unit.MoveToArea`, which every unit uses. Once an enemy moves (T3 placeholder actions, M6 AI), it would push the clock too. Only a *player* action costs time, so the call belongs where the player acts, e.g. the controller's `MoveToArea` after `bMoveToAreaSuccessed` is true (#97).
-- `BaseCostMove` is a variable on `BP_Unit`. When Move escalates (+0.5 per use, GDO §4.3, M5) it should come from hero data (`PDA_Hero` or the Move ability).
+- `BaseMoveCost` (renamed from `BaseCostMove`) stays on `BP_Unit` for now (#102). When Move escalates (+0.5 per use, GDO §4.3, M5) it should come from hero data (`PDA_Hero` or the Move ability).
 - The start value is still pushed by the controller (`SetClockInfo` with `GetCurrentTimeTenths`). The widget could do that itself in Event Construct, right after its cast. Then the controller only creates the widget and doesn't need `ClockWidgetReference`. Optional.
 - The Cast Failed pins (controller, widget, unit) are unwired. A Print String there would explain a blank clock. Fine to leave.
 
@@ -353,6 +359,10 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Source of truth**: the one place that owns a fact; everything else asks it. Selection → the controller's variables; the looks are painted *from* them; "is this unit already in an Area?" → the Area's `UnitsInArea`, not the unit's `CurrentArea`.
 - **Find References / Find in Blueprints**: right-click a function or variable in My Blueprint → Find References lists every node that uses it in this Blueprint; the binoculars (Ctrl+Shift+F) search all Blueprints.
 - **Collapse to Function / Collapse Nodes / Comment box**: Collapse to Function turns selected nodes into a real function (inputs, outputs, locals, reusable). Collapse Nodes only packs them into a grey box (visual only). A comment box (select nodes, press C) is a labelled frame.
+- **Class Reference (variable type)**: the purple version of a variable type. It holds a *kind* of thing (the house plan, `BP_EnemyUnit`), not one existing thing (blue Object Reference, `Area_7`). Spawn Actor's Class pin takes one. Its type also decides which Expose on Spawn pins the Spawn node shows: a `BP_Unit` class wire shows Current Area and Unit Data, a plain Actor class doesn't.
+- **Call to Parent Function**: in a child Blueprint, an event like BeginPlay *replaces* the parent's version. Right-click the event → Add Call to Parent Function adds a node that runs the parent's version too. `BP_EnemyUnit` calls it first, so `BP_Unit`'s look loading and HP push still happen.
+- **Modulo (`%`)**: the remainder after dividing. 7 % 3 = 1. Like a clock face: one hour past 12 is 1, not 13. (index + 1) % length steps through an array and wraps back to 0 after the last item.
+- **Absolute vs relative time**: absolute = a fixed point on the clock ("lands at 5.0s"); relative = a distance from now ("lands in 2.5s"). Enemies store absolute time, so "is it due?" is one comparison; time left = due − clock.
 
 **Our game's terms**
 - **Area**: one rectangle of the board. It has a capacity (how many units fit) and neighbors (rectangles sharing an edge).
