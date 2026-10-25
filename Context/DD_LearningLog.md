@@ -333,3 +333,21 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Couldn't find `OnClockAdvanced` in `BP_EnemyUnit` until the Cast (same lesson as T2).
   - `OnClockTick` re-reads the clock through a second cast instead of using its `NewTimeTenths` pin.
   - (Claude's slip) MCP read the `IA_Select` event as empty, so Claude reported the `AdvanceClock` call missing. It was there.
+
+**2026-10-25 · M4-T4 · Land in order** ✅
+- **Learned:**
+  - Designed the **battle queue** yourself in Miro: one referee finds the earliest enemy, resolves it, and asks again until nobody is due. That one loop fixes both "two attacks in one jump" and "bind order instead of time order".
+  - **"Due at" beats "time until"**: a due time stays true while the clock moves (train timetable: "departs *at* 14:30"); time left is one subtraction when the UI needs it.
+  - **Running minimum** (the "note in your hand" pattern) for `FindEarliestAttacker`, including the trap: a note starting at 0 never gets written, so index 0 always goes on it.
+  - **Functions run in one frame and can't wait; events can.** So the repeat is a custom event that calls itself as its last step, not a While Loop, ready to wait for animations later.
+  - **Referee vs scoreboard**: the Game Mode decides what happens next (the queue); the Game State holds the clock everyone reads.
+  - Keep a function that returns two answers **impure**: a pure node re-runs for every output pin read.
+  - Catch designer mistakes in the data (Value Range Min = 1) instead of cluttering the logic.
+  - Tested with a 10s jump and checked the log against a written-down expected order.
+- **Tripped up:**
+  - Made the attack assets as **child Blueprint classes** of `PDA_EnemyAttack`, so the `AttackSet` picker showed nothing. Data Assets are made via Miscellaneous → Data Asset.
+  - Thought `DA_Ghoul` had no `AttackSet`. Every DA has every field of its PDA; it was just empty.
+  - Wanted to store `TimeUntilAttack` and update every enemy after each jump.
+  - First `FindLowest` compared `due − clock` but stored plain `due`, mixing two kinds of number; then it fell into the start-at-0 trap.
+  - `ResolveAttack` first set `CurrentAttack` to None, which only worked because the old `OnClockTick` refilled it right after.
+  - Unsure how to build the repeat with a While Loop (the answer: don't, use a self-calling event).

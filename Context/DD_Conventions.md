@@ -16,7 +16,7 @@ Content/
 │   ├── Units/          what heroes and enemies share: BP_Unit, PDA_Unit, E_Team
 │   │   ├── Heroes/     PDA_Hero, PDA_HeroAbility, hero material, DA_ files
 │   │   │   └── Warrior/   only once a hero has its own files (mesh, material, abilities) → DA_Warrior moves in
-│   │   └── Enemies/    PDA_Enemy, PDA_EnemyMove, enemy material, DA_ files (Ghoul/ etc. same rule)
+│   │   └── Enemies/    PDA_Enemy, PDA_EnemyAttack, enemy material, DA_ files (Ghoul/ etc. same rule)
 │   ├── Combat/         battle clock, turn flow, base for all abilities
 │   ├── UI/
 │   ├── Input/          (create when needed)

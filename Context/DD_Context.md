@@ -127,18 +127,20 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T1 – The battle clock.** ✅ 2026-10-24. `BP_BattleGameState` (GameStateBase) owns `CurrentTimeTenths` (Int, tenths of a second), set as the Game Mode's Game State Class. `WBP_BattleClock` shows it as "2.5s" (Decisions #91–#93).
 - [x] **T2 – Actions cost time.** ✅ 2026-10-24. `BP_BattleGameState.AdvanceClock(BattleClockIncrease)` is the only way to change the time: Add → SET → `Call OnClockAdvanced(NewTimeTenths)`. A successful `BP_Unit.MoveToArea` calls it with `BaseCostMove` = 10 (1s). `WBP_BattleClock` binds in Event Construct and refreshes via `SetClockInfo` (Decisions #94–#97).
 - [x] **T3 – Enemies on the timeline.** ✅ 2026-10-25. Enemies spawn as **`BP_EnemyUnit`** (child of `BP_Unit`), which binds to `OnClockAdvanced` in BeginPlay (after Parent: BeginPlay). `OnClockTick`: if `InternalClockTenths + BaseActionCost <= clock` → Print attack, then `InternalClockTenths += BaseActionCost` (next action starts at the old due time). The Game Mode's new `SpawnUnit` function picks the class through a `BP_Unit` Class Reference local. `AdvanceClock` moved to the controller's `IA_Select` success path (Decisions #98–#102).
-- [ ] **T4 – Land in order.** When one hero action jumps the clock past several enemy actions, they resolve in time order, and the GDO §4.1 example (Ghoul's 3s attack vs a 4s Slash) plays out right.
+- [x] **T4 – Land in order.** ✅ 2026-10-25. Attacks come from data: `PDA_EnemyAttack` DAs in `PDA_Enemy.AttackSet`, cycled by `SelectNextAttack`. The **battle queue** lives in the Game Mode: `SpawnUnit` adds every enemy to `EnemyQueue`; `OnClockAdvanced` → custom event `ResolveNextAttack(NewTimeTenths)` → `FindEarliestAttacker` (running minimum over the pure `GetNextAttackDue`) → Is Valid and due `<=` clock → `ResolveAttack` → calls itself. Enemies no longer listen to the clock. Log for a 10s jump: Ghoul 30, Ghoul 30, Cultist 40, Ghoul 80, Ghoul 80, Cultist 100; the next jump continues at 110 (Decisions #103–#108).
 - [ ] **T5 – Timeline UI.** A widget lists the upcoming enemy actions with seconds left ("Ghoul · 3.0s").
 - [ ] **T6 – Debugging pass.** Track down one timeline bug with breakpoints, Print and the Visual Logger.
 
-**Next:** M4-T4 – Land in order. Branchy: extend the T3 Miro sketch first. Three questions: (1) per-enemy costs (the Ghoul's 3s) need the action to come from data, e.g. cycling `MoveSet` with a `CurrentMoveIndex` and modulo; (2) one jump can pass *two* of the same enemy's actions, but `OnClockTick` resolves at most one; (3) every enemy listens on its own, so they resolve in the order they bound, not in time order. Who decides the order?
+**Next:** M4-T5 – Timeline UI. A widget lists the upcoming enemy attacks with seconds left ("Ghoul · 3.0s"). The data is ready: time left = `GetNextAttackDue` − clock, worked out when the widget draws. Questions to settle first: who creates the widget (the controller, like `WBP_BattleClock`, #93), where it gets the enemy list (`EnemyQueue` on the Game Mode), and when it refreshes (it can bind to `OnClockAdvanced` like the clock widget, #96). Showing them *sorted* reuses the running-minimum idea.
 
-**Open from M4-T3:**
-- `OnClockTick` ignores its `NewTimeTenths` input and casts to the Game State again to read the time. Use the pin; the cast can go (#95).
-- `SetBaseActionCost 25` after the attack writes the value it already has. It's the placeholder for "pick the next action" and goes away with `MoveSet` cycling (T4).
-- Every enemy uses the class default (25 = 2.5s), so all three attack in the same moment.
-- The Print uses Get Display Name (`BP_EnemyUnit0`) with no space before "PERFORMS"; `UnitData`'s `DisplayName` would say "Ghoul". Fine to leave.
-- `BP_EnemyUnit` sits in `Units/`; Conventions put enemy-only things in `Units/Enemies/`. Move it through the Content Browser when convenient.
+**Open from M4-T4:**
+- `FindEarliestAttacker` uses two Branches (index 0, then `<`) where one Branch with an OR would do. Same result; fine to leave.
+- Ties go to whoever comes first in `EnemyQueue`, which is spawn order. Fine for now; a real tie rule is a design question.
+- Animations (later): `ResolveNextAttack`'s self-call moves behind an "attack finished" dispatcher on the enemy. That's why it's an event and not a While Loop (#106).
+- Dead enemies must leave `EnemyQueue` (M5, with damage). Until then `Is Valid` covers an empty queue.
+- Check that the time field on `PDA_EnemyAttack` has **Value Range Min = 1** (#108). MCP can't show it.
+- `BP_EnemyUnit` sits in `Units/`; Conventions put enemy-only things in `Units/Enemies/`. Move it through the Content Browser when convenient. (Carried from T3.)
+- The "Mixing AGameStateBase with AGameMode" error is gone from the log since 14:42 on 2026-10-25. If the Game Mode was reparented, #11 needs updating.
 
 **Open from M4-T2:**
 - `BaseMoveCost` (renamed from `BaseCostMove`) stays on `BP_Unit` for now (#102). When Move escalates (+0.5 per use, GDO §4.3, M5) it should come from hero data (`PDA_Hero` or the Move ability).
@@ -363,6 +365,11 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Call to Parent Function**: in a child Blueprint, an event like BeginPlay *replaces* the parent's version. Right-click the event → Add Call to Parent Function adds a node that runs the parent's version too. `BP_EnemyUnit` calls it first, so `BP_Unit`'s look loading and HP push still happen.
 - **Modulo (`%`)**: the remainder after dividing. 7 % 3 = 1. Like a clock face: one hour past 12 is 1, not 13. (index + 1) % length steps through an array and wraps back to 0 after the last item.
 - **Absolute vs relative time**: absolute = a fixed point on the clock ("lands at 5.0s"); relative = a distance from now ("lands in 2.5s"). Enemies store absolute time, so "is it due?" is one comparison; time left = due − clock.
+- **Data Asset vs child Blueprint of a `PDA_`**: a Data Asset (Content Browser → Miscellaneous → Data Asset) is a *filled-in copy* of the form, e.g. `DA_GhoulAttack1`. A child Blueprint class is a *new blank form* with extra fields. Slots like `AttackSet` take filled-in copies, so a Blueprint class never shows up in their picker.
+- **Running minimum**: finding the smallest item by walking the list once with a "best so far" note, replacing it whenever you meet something smaller. Like finding the shortest person in a queue. The first item must always be written down (`Array Index == 0`), or a note that starts at 0 never changes. `FindEarliestAttacker` does this.
+- **Self-calling event (recursion)**: an event whose last step calls itself, so each call handles one step and asks "anything else?". `ResolveNextAttack` resolves one attack per call. Unlike a While Loop, the call-again can later wait (for an animation), and it stops when its Branch says no.
+- **Value Range (variable)**: the Min/Max a number variable accepts in the Details panel. Set on a data field, it stops bad data at the source (attack time ≥ 1) instead of guarding against it in logic.
+- **Battle queue**: the Game Mode's list of enemies (`EnemyQueue`) and the logic that resolves their attacks in time order after each clock jump. The Game Mode is the referee (decides what happens next); the Game State is the scoreboard (the clock everyone reads).
 
 **Our game's terms**
 - **Area**: one rectangle of the board. It has a capacity (how many units fit) and neighbors (rectangles sharing an edge).
