@@ -71,7 +71,8 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - **Enemies move the board-game way:** they move up to the **move distance of the action they're doing** (in Areas) toward their target, then attack if they're in range. Distance belongs to each move action, not to the unit, so one enemy can have a short move and a long one (decided M3-T1). If they can't reach, they still move as far as they can and the attack doesn't happen. ✅
 
 #### 4.4 Enemy Intents 🟡
-- Each enemy always shows its **next action + seconds left** ("3.5s Move + Attack Closest").
+- Each enemy always shows its **next action + seconds left** ("3.5s Move + Attack Closest"). ✅ Built in M4-T5 as a line above the enemy's health bar ("GhoulAttack2 | 3.0s"). An attack that's due but still waiting its turn shows **0.0s** = "resolving now". ✅
+- **HUD timeline** (planned, M5 or M8): a bar across the top of the screen from 0 to 10+ seconds; each enemy's icon sits where its next action lands, and hovering an icon shows the details. Shows the *order* and the gaps at a glance. 🟡
 - Targeting labels ✅: **Closest / Furthest / Highest HP / Lowest HP**. Each enemy action picks one; we'll choose per enemy as we design them.
 - ❓ *(low priority, decide during M6)* Is the *target* shown in advance, or only the action?
 

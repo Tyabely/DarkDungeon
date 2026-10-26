@@ -351,3 +351,20 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - First `FindLowest` compared `due − clock` but stored plain `due`, mixing two kinds of number; then it fell into the start-at-0 trap.
   - `ResolveAttack` first set `CurrentAttack` to None, which only worked because the old `OnClockTick` refilled it right after.
   - Unsure how to build the repeat with a While Loop (the answer: don't, use a self-calling event).
+
+**2026-10-26 · M4-T5 · Enemy intent label** ✅
+- **Learned:**
+  - Questioned the plan: chose a label above each enemy over a HUD list, and sketched a better HUD timeline (proportional bar, icons, hover) for later.
+  - UMG layout: **Overlay** to stack text on the bar, **Size Box** overrides in pixels, why **Render Transform** is the wrong tool for size.
+  - Widget inheritance: a child Widget Blueprint can't add widgets of its own; the parent leaves a **Named Slot**.
+  - Changing an inherited component's Widget Class is a Details setting, not an Event Graph override.
+  - Two listeners on one dispatcher have no order you control, so the update goes into the Game Mode's chain, right after the attacks resolve.
+  - Thought ahead to animations: one attack plays, then the next, so labels update after every attack. Added a Delay as a stand-in and spotted that input isn't blocked meanwhile.
+  - **Clamp** at 0 so a waiting attack reads "0.0s" (your UX call). Format Text for "{Attack} | {Time}s".
+  - Checked the labels against the log at three clock times.
+- **Tripped up:**
+  - Typed 1.1 into Height Override as if it were a scale (it's pixels) and kept the Render Transform, so nothing seemed to change.
+  - Read "override a part of the parent" as needing an Event Graph change.
+  - Named only the Is Not Valid exit as "nothing due"; the usual one is the Branch False.
+  - Couldn't put content into the Named Slot from the child, so `IntentText` sits in the parent and heroes showed "Text Block" until you hid it. (Partly Claude's wording: "put a Text in `IntentSlot`" didn't say *in the child*.)
+  - Saved the child widget in the Content root first.
