@@ -121,29 +121,34 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 #### ▶ Current focus
 *Claude updates this block whenever you say a task is done (after checking it). You only report "done".*
 
-**M4 – The Time System** · 🔄 in progress. Goal: one shared battle clock. A hero action pushes it forward by its cost, enemy actions are scheduled on it and land in order, and a timeline UI shows what's coming (GDO §4.1).
-*(Draft task list, written when M3 closed. Change it freely as M4 goes. T3–T4 are branchy: sketch a Miro flowchart first.)*
+**M5 – Abilities** · 🔄 in progress. Goal: either hero picks an ability, picks a target, deals damage from a range (e.g. 80–110), and each use costs time that escalates (GDO §4.2, §5, §6).
+*(Draft task list, written when M4 closed. Change it freely as M5 goes. T4 is branchy, so sketch a Miro flowchart first.)*
 
-- [x] **T1 – The battle clock.** ✅ 2026-10-24. `BP_BattleGameState` (GameStateBase) owns `CurrentTimeTenths` (Int, tenths of a second), set as the Game Mode's Game State Class. `WBP_BattleClock` shows it as "2.5s" (Decisions #91–#93).
-- [x] **T2 – Actions cost time.** ✅ 2026-10-24. `BP_BattleGameState.AdvanceClock(BattleClockIncrease)` is the only way to change the time: Add → SET → `Call OnClockAdvanced(NewTimeTenths)`. A successful `BP_Unit.MoveToArea` calls it with `BaseCostMove` = 10 (1s). `WBP_BattleClock` binds in Event Construct and refreshes via `SetClockInfo` (Decisions #94–#97).
-- [x] **T3 – Enemies on the timeline.** ✅ 2026-10-25. Enemies spawn as **`BP_EnemyUnit`** (child of `BP_Unit`), which binds to `OnClockAdvanced` in BeginPlay (after Parent: BeginPlay). `OnClockTick`: if `InternalClockTenths + BaseActionCost <= clock` → Print attack, then `InternalClockTenths += BaseActionCost` (next action starts at the old due time). The Game Mode's new `SpawnUnit` function picks the class through a `BP_Unit` Class Reference local. `AdvanceClock` moved to the controller's `IA_Select` success path (Decisions #98–#102).
-- [x] **T4 – Land in order.** ✅ 2026-10-25. Attacks come from data: `PDA_EnemyAttack` DAs in `PDA_Enemy.AttackSet`, cycled by `SelectNextAttack`. The **battle queue** lives in the Game Mode: `SpawnUnit` adds every enemy to `EnemyQueue`; `OnClockAdvanced` → custom event `ResolveNextAttack(NewTimeTenths)` → `FindEarliestAttacker` (running minimum over the pure `GetNextAttackDue`) → Is Valid and due `<=` clock → `ResolveAttack` → calls itself. Enemies no longer listen to the clock. Log for a 10s jump: Ghoul 30, Ghoul 30, Cultist 40, Ghoul 80, Ghoul 80, Cultist 100; the next jump continues at 110 (Decisions #103–#108).
-- [x] **T5 – Enemy intent label.** ✅ 2026-10-26. Changed from a HUD list: each enemy shows its next attack above its health bar ("GhoulAttack2 | 3.0s"). `WBP_HealthBar` got an Overlay (HP text on a 150×44 bar) and a Named Slot `IntentSlot` holding `IntentText`; the child `WBP_HealthBarEnemy` adds `SetIntentInfo`. `BP_EnemyUnit.UpdateIntentLabel(ClockTenths)` shows the attack's Name and time left (clamped at 0). Called with 0 in BeginPlay, and by the Game Mode's `ResolveNextAttack` for every enemy after each attack (after a 0.1s placeholder Delay) and when nothing more is due. Screenshots at 2s / 5s / 8s match the log (Decisions #109–#114).
-- [ ] **T6 – Debugging pass.** Track down one timeline bug with breakpoints, Print and the Visual Logger.
+- [ ] **T1 – Health and damage.** Health moves into an Actor Component `BPC_Health` (#80): current/max HP, a `TakeDamage` entry point (an **Interface**, so heroes and enemies answer the same message), an `OnHealthChanged` dispatcher the label listens to (replaces the one-time `SetUnitInfo` push, #89), and death: the enemy leaves `EnemyQueue` and is destroyed. Test with a debug key that hits one enemy.
+- [ ] **T2 – Ability data.** `PDA_Ability` (name, base cost, escalation, decay, range in Areas, damage min/max), one `DA_` per ability, listed on `PDA_Hero`. Start with A1 for each hero (Slash, Shot).
+- [ ] **T3 – Ability bar.** UMG buttons for the selected hero's abilities, showing name and current cost. Clicking one selects the ability (events, not bindings).
+- [ ] **T4 – Target and resolve.** With an ability selected, Areas in range light up (range = Area steps, GDO §3: needs a "distance on the graph"). Click a target: random damage in range, `AdvanceClock(cost)`, enemy attacks resolve. If the hit kills, the enemy's attack never happens (GDO §4.1). *Flowchart first.*
+- [ ] **T5 – Escalating cost.** Each use adds the ability's escalation; the cost decays per second of clock back to base (GDO §4.2). Move escalates too (+0.5, GDO §6), so `BaseMoveCost` leaves `BP_Unit` (#102).
+- [ ] **T6 – One status.** One timed status as a Gameplay Tag in a Tag Container on the unit (e.g. Shield Wall's half damage for 4s), expiring on the clock.
 
-**Next:** M4-T6 – Debugging pass. Hunt one real timeline bug with breakpoints, Print and the Visual Logger. Best candidate from T5: a click during the 0.1s Delay starts a second `ResolveNextAttack` chain, which resolves an attack at once and then dies on the busy Delay, and it overwrites `NewTimeTenths` for the first chain (raise the Delay to 2s to see it). Predict what you'll see, then prove it with the tools.
+**Next:** M5-T1 – Health and damage. Start by reading how `BP_Unit` holds HP now (`CurrentHealth`, the BeginPlay `SetUnitInfo` push) and decide what moves into `BPC_Health`.
 
-**Open from M4-T5:**
+**Carried over from M4-T6:**
+- Set the placeholder Delay in `ResolveNextAttack` back to **0.1s** (it's 2.0 for the T6 test).
+- The overlapping-chains bug is known and left in on purpose (#115): a click during the Delay starts a second chain that resolves one attack at once and dies on the busy Delay; the first chain then carries on with the second chain's time. Fix with the "is resolving" flag when animations arrive. When the flag goes in, expect the first chain to stop "rescuing" the second: test that every due attack still resolves.
+- Delete the ENTER / AFTER-delay **Print Text** nodes (and their Format Text / Get Game Time nodes); keep the **Vis Log** nodes in the Game Mode's "Debug" comment box (#116).
+
+**Carried over from M4-T5:**
 - ~~Heroes show "Text Block"~~ fixed 2026-10-26 (heroes show no intent line). `IntentText` still sits in the parent's `IntentSlot`, so the Named Slot does no work; fine to leave it or remove it. "0.0s" seen in play.
 - Bar width follows the widest line (enemy bars stretch to the intent text): the Overlay's Vertical Box slot is Horizontal Alignment **Fill**. Set it to **Center** so the Size Box's 150 holds.
 - The "update every enemy" For Each is copied into the True and False exits of `ResolveNextAttack`. Collapse to a function (`UpdateAllIntentLabels`) so a change happens once.
-- The Game Mode variable `NewTimeTenths` has the same name as the event's input. Rename one (e.g. `ResolveTimeTenths`) before debugging it in T6.
+- ~~Rename the Game Mode variable `NewTimeTenths`~~ done in T6: it's `ResolveTimeTenths` now.
 - Input isn't blocked while attacks resolve (#113). The real fix is an "is resolving" flag the controller checks; it belongs with animations.
 - Attack names show the DA's Name field ("GhoulAttack1"); give them real names ("Bite") in the DAs when the attacks get designed (M6).
 - The clamp uses Select with `>`; a Max (Integer) node does the same in one node. Fine to leave.
 - HUD timeline (your sketch: proportional bar 0→10+s with enemy icons, hover for details) is planned in GDO §4.4 for M5/M8.
 
-**Open from M4-T4:**
+**Carried over from M4-T4:**
 - `FindEarliestAttacker` uses two Branches (index 0, then `<`) where one Branch with an OR would do. Same result; fine to leave.
 - Ties go to whoever comes first in `EnemyQueue`, which is spawn order. Fine for now; a real tie rule is a design question.
 - Animations (later): `ResolveNextAttack`'s self-call moves behind an "attack finished" dispatcher on the enemy. That's why it's an event and not a While Loop (#106).
@@ -152,7 +157,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - `BP_EnemyUnit` sits in `Units/`; Conventions put enemy-only things in `Units/Enemies/`. Move it through the Content Browser when convenient. (Carried from T3.)
 - The "Mixing AGameStateBase with AGameMode" error is gone from the log since 14:42 on 2026-10-25. If the Game Mode was reparented, #11 needs updating.
 
-**Open from M4-T2:**
+**Carried over from M4-T2:**
 - `BaseMoveCost` (renamed from `BaseCostMove`) stays on `BP_Unit` for now (#102). When Move escalates (+0.5 per use, GDO §4.3, M5) it should come from hero data (`PDA_Hero` or the Move ability).
 - The start value is still pushed by the controller (`SetClockInfo` with `GetCurrentTimeTenths`). The widget could do that itself in Event Construct, right after its cast. Then the controller only creates the widget and doesn't need `ClockWidgetReference`. Optional.
 - The Cast Failed pins (controller, widget, unit) are unwired. A Print String there would explain a blank clock. Fine to leave.
@@ -165,7 +170,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` compares `Team` with **Equal (Byte)** vs 0 (use the enum `==` Hero) and its `CastFailed` path has no Return node; `SetUnitLook` still takes a `Team` input the unit already has; the controller's `MoveToArea` shares its name with the unit's (e.g. `TryMoveSelectedHero`); a `UnitPick` trace channel would replace `Visibility` for unit picking; spawn and move could become two functions (Decisions #63). Older: `Input/Test.uasset` (M1-T5) looks like a leftover; M1 notes (Append "Hit:" spacing, `TopCube` Z = 100 note, camera ~65 cm off centre).
 
-**Last finished:** **M3 – Data-driven Units** ✅ closed 2026-10-24 with M3-T6 See the data in play: a Widget Component on `BP_Unit` (Space = Screen, Draw at Desired Size, Z 220) shows `WBP_HealthBar` (name, bar, "800 / 800"). `BP_Unit`'s BeginPlay does Get Widget → Cast To `WBP_HealthBar` → `SetUnitInfo(UnitName, CurrentHealth, MaxHealth)`, which sets `NameText`, `HealthBar` and `CurrentHealthText` once. No bindings, no Tick (Decisions #88–#90). M3 built: `PDA_Unit`/`PDA_Hero`/`PDA_Enemy`, four `DA_`s, spawn from typed rosters, identity Gameplay Tags, soft mesh/material with Async Load Asset. Task list in git history (`M3-T6` commit) and Decisions #66–#90. **M2 – Pieces on the Board** ✅: `M2-T6` commit and Decisions #37–#65. **M1 – The Board** ✅: `M1-T6` commit and Decisions #11–#36.
+**Last finished:** **M4 – The Time System** ✅ closed 2026-10-28 with M4-T6 Debugging pass: found the overlapping-chains bug (a second click during the Delay starts a second `ResolveNextAttack` chain, which resolves one attack at once and dies on the busy Delay; the first chain then uses the second chain's time) and proved it with Print (`ENTER`/`AFTER delay` + Get Game Time in Seconds), a breakpoint on the Delay (Step Over from chain B landed on chain A's wake-up 2s later) and the Visual Logger (attacks ~1.2s apart, no wake-up mark for chain B). Fix deferred to the "is resolving" flag (Decisions #115–#117). M4 built: the battle clock in tenths on `BP_BattleGameState`, `AdvanceClock` + `OnClockAdvanced`, `BP_EnemyUnit`, attacks from `PDA_EnemyAttack` data, the Game Mode's battle queue (`ResolveNextAttack`), and enemy intent labels. Task list in git history (`M4-T6` commit) and Decisions #91–#117. **M3 – Data-driven Units** ✅ closed 2026-10-24 with M3-T6 See the data in play: a Widget Component on `BP_Unit` (Space = Screen, Draw at Desired Size, Z 220) shows `WBP_HealthBar` (name, bar, "800 / 800"). `BP_Unit`'s BeginPlay does Get Widget → Cast To `WBP_HealthBar` → `SetUnitInfo(UnitName, CurrentHealth, MaxHealth)`, which sets `NameText`, `HealthBar` and `CurrentHealthText` once. No bindings, no Tick (Decisions #88–#90). M3 built: `PDA_Unit`/`PDA_Hero`/`PDA_Enemy`, four `DA_`s, spawn from typed rosters, identity Gameplay Tags, soft mesh/material with Async Load Asset. Task list in git history (`M3-T6` commit) and Decisions #66–#90. **M2 – Pieces on the Board** ✅: `M2-T6` commit and Decisions #37–#65. **M1 – The Board** ✅: `M1-T6` commit and Decisions #11–#36.
 
 #### Milestones
 
@@ -175,8 +180,8 @@ Optional leftovers from M2 (fine to leave, nice to fix): `GetUnitUnderCursor` co
 | M1 | **The Board** | ✅ 2026-10-16 | Fixed room of rectangle Areas visible from a top-down camera; click an Area to highlight it | Actors vs Components, Blueprint classes, construction script, collision/traces for mouse picking, Player Controller, camera |
 | M2 | **Pieces on the Board** | ✅ 2026-10-21 | 2 hero placeholders + 3 enemy placeholders placed in Areas; Area capacity respected | Spawning, references between actors, arrays/maps, enums, structs, Area adjacency (graph basics) |
 | M3 | **Data-driven Units** | ✅ 2026-10-24 | Heroes/enemies built from data (stats, abilities) instead of hard-coded values | Primary Data Assets / Data Tables, Gameplay Tags, soft vs hard references |
-| M4 | **The Time System** | 🔄 | Each enemy shows its next attack and seconds left; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
-| M5 | **Abilities** | ⬜ | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events), statuses as Gameplay Tags (`Status.Bleed`, `Status.Buff.*`) in a Tag Container on the unit (add/remove/has-tag) |
+| M4 | **The Time System** | ✅ 2026-10-28 | Each enemy shows its next attack and seconds left; the clock advances by the cost of your action and enemy actions land in order | Game Mode / Game State ownership, Event Dispatchers, functions vs events, debugging (breakpoints, Print, Visual Logger) |
+| M5 | **Abilities** | 🔄 | Either hero can pick an ability, pick a target Area, deal ranged damage (e.g. 80–110); escalating costs work | Ability architecture (objects/components), interfaces, targeting, UMG basics (buttons, bindings vs events), statuses as Gameplay Tags (`Status.Bleed`, `Status.Buff.*`) in a Tag Container on the unit (add/remove/has-tag) |
 | M6 | **Enemy AI** | ⬜ | Enemies telegraph & execute intents ("3.5 ⏳ Move + Attack") | Simple decision logic in BP (no Behavior Trees needed), reuse of the ability system |
 | M7 | **Win / Lose & Loop** | ⬜ | Battle ends, restart / next battle | Level/state flow, Game Instance, basic save data |
 | M8 | **Portfolio pass** | ⬜ | Short trailer/GIF, readme, docs cleanup | Sequencer basics (optional), packaging a build |
@@ -297,7 +302,7 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Hard reference**: a pointer to another asset that is *packed in the backpack*: loading the asset that holds it also loads the target, every time. `BP_Unit`'s `Cube` component hard-references the engine Cube.
 - **Soft reference (Soft Object Reference)**: a pointer that stores only the target's *path*, like a note saying "the sword is in locker 12". Nothing loads until you ask. `PDA_Unit.StaticMesh` and `Material` are soft since M3-T5. Its pin is a lighter shade of the hard reference's colour.
 - **Async Load Asset**: a latent node that loads a soft reference in the background. **then** fires at once (asset not there yet), **Completed** fires on a later frame with the asset as a plain Object, so you Cast it (To StaticMesh, To MaterialInterface) before using it.
-- **Latent node**: a node that finishes later, not in the same frame (clock icon: Delay, Async Load Asset). Allowed only in an Event Graph, never in a function or the Construction Script.
+- **Latent node**: a node that finishes later, not in the same frame (clock icon: Delay, Async Load Asset). Allowed only in an Event Graph, never in a function or the Construction Script. **One Delay node on one object holds one timer**: if another chain reaches it while it's counting, that call is dropped and the chain ends there (the M4-T6 bug). A second Delay node has its own timer; **Retriggerable Delay** restarts the countdown instead.
 - **Load Asset Blocking / hitch**: the non-async way to load a soft reference: the whole game stops until the asset is in memory. That visible stutter is a **hitch**, which is why gameplay uses Async Load Asset.
 - **Reference Viewer**: right-click an asset → Reference Viewer. A map of what the asset points at and what points at it, with filters to show hard and soft references separately.
 - **Size Map**: right-click an asset → Size Map. Boxes showing how much memory (or disk) loading that asset drags in with it.
@@ -386,6 +391,15 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Named Slot**: a labelled empty socket in a parent widget's layout, like the blank "Notes:" box on a printed form. A child Widget Blueprint inherits the parent's layout and can't add widgets except into such a slot. Content placed in it *in the parent* is default content every user of the widget gets.
 - **Clamp**: forcing a number to stay inside limits. Time left = Max(due − clock, 0), so an overdue attack shows "0.0s" ("resolving now") instead of a negative number.
 - **Format Text**: a node that fills a template with values. `{Attack} | {Time}s` grows two input pins, `Attack` and `Time`.
+- **Execution chain**: one run of white exec wires, started by one event call. Each click starts its own chain of `ResolveNextAttack`; two can be in flight at once inside one actor, both reading and writing its variables.
+- **Race condition**: a bug where the result depends on which of two overlapping chains gets somewhere first, usually because they share a variable. Like two cooks using one whiteboard: B wipes A's number, A later reads B's. In T6 chain A carried on with chain B's `ResolveTimeTenths`.
+- **Output Log**: Window → Output Log. Every Print (and engine message) as a line of text that stays, unlike on-screen Prints, which vanish. Copy lines from here to compare runs.
+- **Get Game Time in Seconds**: real seconds since Play started, like a stopwatch (not the battle clock). Added to a Print, it shows *when* in real time each line happened.
+- **Breakpoint**: a red stop sign on a node (select it, **F9**). When execution reaches it, the game freezes and you can hover over pins to see their values. **Resume** (F5) unfreezes.
+- **Step Over / Step Out**: while frozen, **Step Over** (F10) runs one more node and freezes at whatever runs next, even in another Blueprint or seconds later. **Step Out** (Alt+Shift+F11) finishes the current function or macro and freezes back in the graph that called it.
+- **Hover value (debugger)**: hovering a pin while frozen shows its value **from the last time that node ran**. A getter that hasn't run yet shows its default (0), not the variable's current value.
+- **Macro**: a saved bundle of ordinary nodes that Unreal pastes in wherever you use it. For Each Loop is one (Branch, Assign, `<`, Sequence inside), which is why stepping can walk into it. Unlike a function, a macro can hold latent nodes and have several exec exits.
+- **Visual Logger**: Tools → Debug → Visual Logger. A recorder: press Record before Play, then scrub through the run afterwards. One row per actor, a timeline with a mark per frame that logged something (same-frame lines stacked), and shapes drawn in the level at that moment. Nodes: **Vis Log Text** (a line in a **Log Category** like `Chain`) and **Vis Log Location** (a sphere at a spot, e.g. on the attacking enemy). Silent unless recording, and left out of shipping builds.
 - **Battle queue**: the Game Mode's list of enemies (`EnemyQueue`) and the logic that resolves their attacks in time order after each clock jump. The Game Mode is the referee (decides what happens next); the Game State is the scoreboard (the clock everyone reads).
 
 **Our game's terms**

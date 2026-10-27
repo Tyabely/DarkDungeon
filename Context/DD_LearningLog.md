@@ -368,3 +368,19 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Named only the Is Not Valid exit as "nothing due"; the usual one is the Branch False.
   - Couldn't put content into the Named Slot from the child, so `IntentText` sits in the parent and heroes showed "Text Block" until you hid it. (Partly Claude's wording: "put a Text in `IntentSlot`" didn't say *in the child*.)
   - Saved the child widget in the Content root first.
+
+**2026-10-28 · M4-T6 · Debugging pass** ✅
+- **Learned:**
+  - Predict first, then test: wrote down what two overlapping clicks would do before opening any tool, and let the tools say who was right.
+  - **Print as breadcrumbs:** `ENTER` / `AFTER delay` lines with the event input, the shared variable and **Get Game Time in Seconds**, read in the **Output Log**. Counting lines (two ENTERs, one AFTER) showed the second chain was dropped, not queued.
+  - **Breakpoints:** F9 to set, F10 Step Over, F5 Resume. Stepping over chain B's Delay landed on chain A's wake-up 2s later, which shows chain B had no next node. Saw a dispatcher broadcast hand control to the next listener (`WBP_BattleClock`) once the Game Mode's chain paused.
+  - **Visual Logger:** recording, one row per actor, same-frame entries stacked, reading the spacing against the grid (1 line ≈ 1s). Attacks 1.2s apart instead of 2s, and no wake-up mark for the dead chain.
+  - Why the bug looked fine: two bugs cancel out. Chain B dies on the busy Delay, but chain A picks up B's clock time from the shared variable and finishes B's work. Only the missing gap and the stale labels show.
+  - The limit is **one Delay node per object = one timer**, not "one Game Mode = one task": two chains did run inside one Game Mode.
+  - Format Text gaps go in `{}`: `ENTER in={In} var={Var} t={T}` grows three pins.
+- **Tripped up:**
+  - Typed `{ENTER in=` into Format Text, which makes the whole label one unclosed gap.
+  - Hovered a getter that hadn't run yet and read 0; the debugger shows a pure node's last computed value.
+  - Step Over walked into the For Each Loop **macro**'s inner nodes (Step Out or F5 gets back).
+  - First prediction: the second click's chain is queued and the whole chain runs again. The log had no second `AFTER delay`, so it was dropped instead.
+  - Asked whether the task was worth doing at all; settled on doing all of it.

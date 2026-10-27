@@ -66,6 +66,7 @@ New asset type not in the table? Add a row here before using it.
 - **Functions:** named as actions (verb first): `GetDistance`, `ApplyDamage`, `AdvanceClock`.
 - **Events / Event Dispatchers:** named as what happened: `OnUnitDied`, `OnClockAdvanced`.
 - **Readability:** comment boxes around groups of nodes, reroute nodes instead of wire spaghetti, big graphs collapsed into functions.
+- **Debug nodes:** temporary Prints get deleted once a bug is found. Vis Log nodes worth keeping sit in a comment box named **"Debug"**, so they're easy to spot and remove (Decision #116).
 
 ---
 
