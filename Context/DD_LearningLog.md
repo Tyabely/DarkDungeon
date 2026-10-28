@@ -400,3 +400,16 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Gave the component's function and the interface message the same name (`ReceiveDamage`), which doubled the entries in the node menu.
   - First death version: `Destroy Actor` first and `Unit to Remove` unwired, so nothing left the queue.
   - Questioned why the interface is needed at all (a fair question; answered in Decisions #122).
+
+**2026-10-28 · M5-T2 · Ability data** ✅
+- **Learned:**
+  - **Data vs state**: a Data Asset holds what a designer types in and is shared by everyone who points at it, so it's never Set during play. A live number (current cost, Strains) lives on the unit. You reached the "keep the reference, store only what changes" idea yourself.
+  - **Min/Max pairs** describe ranges cleanly: `MinRange`/`MaxRange` cover 0–0 (own Area) and 1–3 (Shot) with no special cases. Your idea.
+  - **Targeting vs effects**: "who do I click" and "what happens" are separate questions. That's why a "self" Boolean waits until Shield Wall.
+  - **Value Range Min as a guard rail** on data fields (cost ≥ 1, ranges and damage ≥ 0), the same as #108.
+  - **Designing in tenths**: integer time from #91 carried into ability data (`BaseCostTenths`).
+  - **Moving a design between games**: your mana "spell exhaustion" model became Strain stacks. A simulation showed that, because the cost *is* time, a fixed 5s fade barely escalates expensive abilities, so the fade became per ability. You also found that stepping "every second" is a symptom of ticking, and working it out on demand removes it.
+- **Tripped up:**
+  - The first pass left `AbilitySet` empty on both hero DAs. The abilities existed but no hero owned them.
+  - Renamed `IsAOE` to `bIsAOE` instead of removing it (fixed on the second pass).
+  - The original strain doc's tables rounded to nearest while the text said "round up". Pick one rule and write it next to the formula.

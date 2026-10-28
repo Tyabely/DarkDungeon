@@ -125,13 +125,19 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 *(Draft task list, written when M4 closed. Change it freely as M5 goes. T4 is branchy, so sketch a Miro flowchart first.)*
 
 - [x] **T1 – Health and damage.** ✅ 2026-10-28. `BPC_Health` (Integer `CurrentHealth`/`MaximumHealth`, `InitHealth` from the Construction Script, `ApplyDamage` with Clamp 0..Max, dispatchers `OnHealthChanged` + `OnDied`); `BPI_Damageable.ReceiveDamage` implemented on `BP_Unit` → `ApplyDamage`; `BP_Unit` binds both dispatchers in BeginPlay and draws the label once; death → Game Mode `HandleUnitDeath(Unit)` removes enemies from `EnemyQueue`, then the unit destroys itself. Tested with two Delayed hits in the Game Mode's BeginPlay (Decisions #118–#124).
-- [ ] **T2 – Ability data.** `PDA_Ability` (name, base cost, escalation, decay, range in Areas, damage min/max), one `DA_` per ability, listed on `PDA_Hero`. Start with A1 for each hero (Slash, Shot).
+- [x] **T2 – Ability data.** ✅ 2026-10-28. `PDA_HeroAbility` rebuilt from the M3 draft: `DisplayName`, `MinDamage`/`MaxDamage` (Min 0), `MinRange`/`MaxRange` (Min 0), `BaseCostTenths` (Min 1), `StrainRatio`, `StrainDurationTenths`; `Size`/`IsAOE` removed. `DA_Slash` (80–110, range 0–0) and `DA_Shot` (70–100, range 1–3), both cost 15 / ratio 0.4 / duration 45, listed in `AbilitySet` on `DA_Warrior` / `DA_Archer`. Escalation redesigned as Strain stacks (GDO §4.2, Decisions #125–#127).
 - [ ] **T3 – Ability bar.** UMG buttons for the selected hero's abilities, showing name and current cost. Clicking one selects the ability (events, not bindings).
 - [ ] **T4 – Target and resolve.** With an ability selected, Areas in range light up (range = Area steps, GDO §3: needs a "distance on the graph"). Click a target: random damage in range, `AdvanceClock(cost)`, enemy attacks resolve. If the hit kills, the enemy's attack never happens (GDO §4.1). *Flowchart first.*
-- [ ] **T5 – Escalating cost.** Each use adds the ability's escalation; the cost decays per second of clock back to base (GDO §4.2). Move escalates too (+0.5, GDO §6), so `BaseMoveCost` leaves `BP_Unit` (#102).
+- [ ] **T5 – Escalating cost.** Strain stacks (GDO §4.2, #125): each use adds an `S_Strain` to the hero's list for that ability; the current cost is worked out on demand from the clock. Move escalates too (GDO §6, re-tune as Strain), so `BaseMoveCost` leaves `BP_Unit` (#102).
 - [ ] **T6 – One status.** One timed status as a Gameplay Tag in a Tag Container on the unit (e.g. Shield Wall's half damage for 4s), expiring on the clock.
 
-**Next:** M5-T2 – Ability data. Start by listing what one ability needs as fields (GDO §4.2, §5) before making `PDA_Ability`.
+**Next:** M5-T3 – Ability bar. Start by deciding who creates the bar widget and who tells it "the selected hero changed" (hint: the same push-not-pull pattern as the clock widget, #89/#93). Until T5 the cost shown is just `BaseCostTenths` as seconds.
+
+**Carried over from M5-T2:**
+- `StrainDurationTenths` has Value Range Min **0**; make it **1**. T5 divides by it, so 0 would be a divide-by-zero.
+- `StrainRatio` has no Min; set Min 0 so a negative ratio can't make spamming cheaper. Optional.
+- Min > Max (damage or range) can't be blocked by Value Range, because it compares two fields. It's a designer rule for now; T4 could swap or warn.
+- Live ability state (Strains, T5) goes on the hero, never on the DA. That's probably the moment `BP_HeroUnit` gets made (#102).
 
 **Carried over from M5-T1:**
 - Delete the debug hits (two Delay → `ReceiveDamage(EnemyQueue[0], 300)`) from the Game Mode's BeginPlay once abilities deal damage (T4).
@@ -420,5 +426,9 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Range / Distance**: how many Area-steps apart two Areas are, counting neighbors, not meters.
 - **Battle clock**: the single shared timer of a fight, in seconds.
 - **Cost**: how many seconds an action pushes the clock forward.
-- **Escalation**: each use of an ability raises its next cost; it slowly cools back down as the clock runs.
+- **Escalation**: each use of an ability raises its next cost; it slowly cools back down as the clock runs. In this game it works through Strain stacks (GDO §4.2).
+- **Strain**: the extra cost one use of an ability leaves behind, like a bruise that fades on its own schedule. Slash paid 1.5s with ratio 0.4 → a Strain of 0.6s that fades to nothing over 4.5s. Several Strains can be active at once; the current cost is the base plus whatever is left of all of them.
+- **On demand (calculated, not stored)**: work a number out at the moment you need it from things that don't go stale (the clock, when something happened), instead of keeping a copy and updating it every tick. `GetNextAttackDue` and the Strain fade both work this way.
+- **Targeting vs effect**: two separate questions about an ability. Targeting = what you click and what's allowed (Shot: an enemy 1–3 Areas away; Shield Wall: no click, it's you). Effect = what happens then (damage, a status, a push). Keeping them apart means a self-buff that also deals damage needs no special case.
+- **Data vs state**: data is what a designer types in and stays fixed during a battle (Slash's base cost, in `DA_Slash`). State is what changes while playing (Slash's current cost, its active Strains), and it lives on the unit. Never Set a variable on a Data Asset during play: everyone shares that one object.
 - **Intent**: what an enemy will do next and when it lands, shown to the player in advance.

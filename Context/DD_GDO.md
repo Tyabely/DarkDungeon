@@ -57,11 +57,18 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - **The incentive to swap heroes is escalation** (§4.2): spamming one hero's best ability gets expensive, so you alternate. ✅
 - ❓ Are both heroes always "equal" on the board, or does the hero who acted last matter (e.g. the one in recovery can't react)?
 
-#### 4.2 Escalating cost ("instead of cooldowns") 🟡
-- Each ability has `BaseCost`. Each use adds `+Escalation` to its current cost.
-- Current cost decays back toward `BaseCost` at `DecayRate` per 1s that passes on the clock.
-- Example: Shield Wall base 2s, +3s per use, decays 0.5s per second. Use it twice quickly → costs 2s, then 5s. Wait 6s → back to 2s.
-- **Everything escalates**, including the Basic Attack and the basic Move. ✅ The Basic Attack is still the "cheap option": slightly lower base cost and a smaller increase per use than other abilities. 🟡
+#### 4.2 Escalating cost ("instead of cooldowns"): Strain stacks 🟡
+*Model chosen 2026-10-28 (Decisions #125). It replaces the earlier "+Escalation per use, linear decay" rule.*
+- Each ability has three numbers: `BaseCost`, `StrainRatio` and `StrainDuration`.
+- **Every use leaves a Strain** = the cost you just paid × `StrainRatio`. Each Strain fades on its own, in a straight line, from full to 0 over `StrainDuration`. Several Strains can be active at once.
+- **Current cost** = `BaseCost` + what's left of every active Strain, **rounded up once** to a whole tenth.
+  - What's left of one Strain = its amount × (1 − time since it happened ÷ `StrainDuration`).
+- Worked out **on demand** from the clock, never ticked: the fade is smooth in tenths even though the clock jumps.
+- **The cost *is* time**, so an ability's own recovery already fades its Strain. That's why `StrainDuration` is per ability: start at about **3× `BaseCost`**, or expensive abilities barely escalate.
+- Spamming one ability **settles** at a higher cost instead of exploding; alternating heroes keeps it lower (the incentive in §4.1).
+- Example (placeholder numbers): Slash, base 1.5s, ratio 0.4, fade 4.5s, used back to back → 1.5s, 1.9s, 2.1s, 2.1s… A 4s ability with a 12s fade → 4.0, 5.1, 5.6, 5.5s…; with the other hero acting 2s between uses → 4.0, 4.8, 4.9s….
+- The `(+x)` numbers in the §6 tables are from the old rule. They get re-tuned as ratios when the kits are balanced.
+- **Everything escalates**, including the Basic Attack and the basic Move. ✅ The Basic Attack is still the "cheap option": slightly lower base cost and a smaller `StrainRatio` than other abilities. 🟡
 - ❓ Show escalation as a number on the ability button, or as a "heat" bar?
 
 #### 4.3 Movement ✅
