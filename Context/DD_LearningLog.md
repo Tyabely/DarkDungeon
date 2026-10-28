@@ -384,3 +384,19 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Step Over walked into the For Each Loop **macro**'s inner nodes (Step Out or F5 gets back).
   - First prediction: the second click's chain is queued and the whole chain runs again. The log had no second `AFTER delay`, so it was dropped instead.
   - Asked whether the task was worth doing at all; settled on doing all of it.
+
+**2026-10-28 · M5-T1 · Health and damage** ✅
+- **Learned:**
+  - **Actor Component**: built `BPC_Health`, added it to `BP_Unit`, and moved HP and its math into it. Healing can reuse the clamp later.
+  - **Construction Script timing**: components already exist there and `UnitData` is set at spawn, so `InitHealth` belongs there; the widget doesn't exist yet, so it can't be touched there.
+  - **Bind only hears the future**: worked out yourself why the label stayed blank (the broadcast from the Construction Script came before BeginPlay's Bind); fixed by calling the handler once after binding.
+  - **Interface vs dispatcher**: an order going in (`ReceiveDamage`) vs news going out (`OnHealthChanged`, `OnDied`). The **(Message)** node works on any Actor.
+  - **Who owns what**: the component says "HP is 0", the unit reports and destroys itself, the Game Mode decides what a death means per team.
+  - Rosters are spawn recipes; `EnemyQueue` is the living enemies.
+- **Tripped up:**
+  - Deleted the Get Widget → Cast chain while rewiring, so `HealthBarWidget` was empty (Accessed None in the log).
+  - Cast to `WBP_HealthBarEnemy` in `BP_Unit`: heroes failed the cast. Shared code casts to the shared parent.
+  - Added the interface but not its event on `BP_Unit`, so the message had nothing behind it.
+  - Gave the component's function and the interface message the same name (`ReceiveDamage`), which doubled the entries in the node menu.
+  - First death version: `Destroy Actor` first and `Unit to Remove` unwired, so nothing left the queue.
+  - Questioned why the interface is needed at all (a fair question; answered in Decisions #122).
