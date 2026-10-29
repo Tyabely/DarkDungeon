@@ -413,3 +413,22 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - The first pass left `AbilitySet` empty on both hero DAs. The abilities existed but no hero owned them.
   - Renamed `IsAOE` to `bIsAOE` instead of removing it (fixed on the second pass).
   - The original strain doc's tables rounded to nearest while the text said "round up". Pick one rule and write it next to the formula.
+
+**2026-10-30 · M5-T3 · Ability bar** ✅
+- **Learned:**
+  - **Widgets inside widgets**: one `WBP_AbilityButton` built once, placed 5 times in `WBP_AbilityBar`. Five fixed slots match "5 abilities per hero" (GDO), so no widgets are created at runtime.
+  - **Owning data vs owning the screen**: the hero (its DA) owns the abilities; the controller owns the bar. Your instinct "the bar is HUD, but the data is the unit's" was both right.
+  - **One way in**: `ChangeSelectedUnit` and `UpdateSelectedAbility` are the only writers of their variables, so each can announce every change with a dispatcher (the `AdvanceClock` pattern again).
+  - **Direct call vs interface vs dispatcher**: phone your manager (one known receiver: the slot calls the controller), "anyone with first aid?" (unknown type: `BPI_Damageable`), a PA announcement (unknown listeners: the slots and the bar).
+  - **One loop for every case**: hero, enemy and nothing all go through the same For Loop; an empty list blanks every slot. **For Loop** counts numbers; **Is Valid Index** asks "is there an item N?" *before* Get.
+  - **Output pins keep their last value**: a Cast's or Set's output pin is a snapshot from the last time that node ran. A path that skips the node still reads the old snapshot. Read the variable instead.
+  - **Local vs normal variables**: a local variable is wiped when its function ends, so it can't remember "last time".
+  - **State, not history**: the toggle compares the click with the *current* `SelectedAbility` (a light switch looks at the lamp), and the dispatcher announces the resulting state. Slots paint from that alone, with no memory of their own.
+  - **Set Background Color** tints the button tile; **Set Color and Opacity** tints its content.
+- **Tripped up:**
+  - The slot's SET ran only on the valid branch, so a blanked slot kept its old ability.
+  - Reading `Unit Data` from an empty `NewUnit` → Accessed None.
+  - Stale output pins twice: the Cast's, then the Set node's, fed the loop after deselecting.
+  - Is Valid *after* Get (too late for the warning), then both Branch exits wired into the same node.
+  - `RecentlySelectedButton` as a local variable; a Branch with True/False swapped; a SET instead of a GET in On Clicked; `ChangeSelectedUnit` re-passing the old ability and missing a Return Node on one path.
+  - A toggle based on "the last click" breaks on the third click; the fix is comparing with the current state.
