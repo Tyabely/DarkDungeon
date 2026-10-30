@@ -131,11 +131,19 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [ ] **T5 – Escalating cost.** Strain stacks (GDO §4.2, #125): each use adds an `S_Strain` to the hero's list for that ability; the current cost is worked out on demand from the clock. Move escalates too (GDO §6, re-tune as Strain), so `BaseMoveCost` leaves `BP_Unit` (#102).
 - [ ] **T6 – One status.** One timed status as a Gameplay Tag in a Tag Container on the unit (e.g. Shield Wall's half damage for 4s), expiring on the clock.
 
-**Next:** M5-T4 – Target and resolve. **Sketch the Miro flowchart first**: what does a click on an Area mean with and without a selected ability, and what happens on a click outside the range? (Suggestion from T3: keep the hero and ability selected and do nothing; cancel only on purpose, e.g. clicking the ability again.) Then "distance on the graph" for the range highlight.
+**T4 progress (2026-10-30):**
+- [x] Targeting rules decided (Decisions #136–#140): click an **enemy unit**; a wrong click keeps the selection and prints; right click cancels in layers; Area clicks never move while an ability is selected; ability clears after use, hero stays.
+- [x] Refactor step 1 ✅ checked: `BP_HeroUnit` (child of `BP_Unit`, in `Units/`) is what the Game Mode's `SpawnUnit` spawns for heroes; `SelectedUnit` → **`SelectedHero`** typed `BP_HeroUnit`; `ChangeSelectedUnit` → `ChangeSelectedHero(BP_HeroUnit)`; the click path casts to `BP_HeroUnit` (Cast Failed → the Area path); the #94 swap is done (ability cleared before the dispatcher). The debug hits in the Game Mode's BeginPlay are gone. Clean PIE run.
+- [ ] Refactor step 2: `GetUnitUnderCursor` drops its `Team == 0` check (Equal (Byte)) and returns any `BP_Unit`. The click path's Cast already does the judging (#141). Play-test: clicking an enemy with nothing selected must still do nothing.
+- [ ] Refactor step 3: tick **Generate Abstract Class** on `BP_Unit` (#142), then re-test.
+- [ ] Flowchart in Miro: *what did I click (hero / enemy / Area / nothing)?* → *is an ability selected?* → the rows of #137.
+- [ ] Then: distance on the graph → range highlight → resolve (`IsValidTarget`, damage, `AdvanceClock`).
+
+**Next:** M5-T4 refactor step 2 (`GetUnitUnderCursor` without the team check), then step 3, then the flowchart.
 
 **Carried over from M5-T3:**
 - T5: the slot reads `BaseCostTenths` from the DA itself. When the real cost lives on the hero, the slot should be *given* the cost (a `CostTenths` input or a `SetCost` function) instead of working it out (#131).
-- `ChangeSelectedUnit` announces `OnSelectedUnitChange` *before* clearing the ability. Swap them so the change is complete before the shout (#94).
+- ~~`ChangeSelectedUnit` announces before clearing the ability~~ swapped in T4 (now `ChangeSelectedHero`).
 - `SetAbilityDisplayName` also sets the cost and the enabled state, so `SetAbility` would be a clearer name.
 - `PaintAbilityDisplay` checks Is Valid twice in a row (Is Valid node, then a Branch on Is Valid). One is enough.
 - Cleanup: the "END OF THE LOOP" Print String in `UpdateDisplay`; `NumberOfAbilities` duplicates the slot count (an array of the 5 slots would replace both it and the 5-way Select node); widgets use `Get Player Controller (0)` where **Get Owning Player** says what's meant.
@@ -149,7 +157,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - Live ability state (Strains, T5) goes on the hero, never on the DA. That's probably the moment `BP_HeroUnit` gets made (#102).
 
 **Carried over from M5-T1:**
-- Delete the debug hits (two Delay → `ReceiveDamage(EnemyQueue[0], 300)`) from the Game Mode's BeginPlay once abilities deal damage (T4).
+- ~~Delete the debug hits from the Game Mode's BeginPlay~~ gone (checked in T4).
 - Hero death does nothing in `HandleUnitDeath` yet. When it matters (M7 lose check), the controller must also clear its selection if the selected hero died.
 - `HandleUnitDeath` reads the team from `UnitData`; `BP_Unit` has its own `Team` variable. Pick one source. The Switch + Cast To `BP_EnemyUnit` could also be just the Cast (success = enemy). Fine to leave.
 - `HandHealthChanged` → `HandleHealthChanged` (typo); the dispatcher input `MaxHealth` vs variable `MaximumHealth`. The queue-print loop in `HandleUnitDeath` is debug.
@@ -450,3 +458,7 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **One way in (single writer)**: only one function may change a value (`AdvanceClock` for the time, `ChangeSelectedUnit` for the unit, `UpdateSelectedAbility` for the ability). Then every change can be announced in one place, and nothing slips past.
 - **State, not history**: decide from the current value, not from what happened last time. The ability toggle asks "is this the ability selected *now*?" (a light switch looks at the lamp), so any number of clicks works. Dispatchers announce the resulting state, not the reason it changed.
 - **Set Background Color vs Set Color and Opacity (Button)**: Background Color tints the button's tile; Color and Opacity tints its content (the text).
+- **Abstract class (Generate Abstract Class)**: a "template only" class. You can make children of it, but never spawn or place it itself, like the recipe category "pasta dish": you cook carbonara, never "pasta dish". Checkbox in Class Settings. `BP_Unit` becomes one once every unit is a `BP_HeroUnit` or `BP_EnemyUnit`.
+- **Child fits a parent pin, not the other way**: a `BP_HeroUnit` *is* a `BP_Unit`, so it plugs into any pin that wants a `BP_Unit`. A `BP_Unit` might be an enemy, so it doesn't plug into a `BP_HeroUnit` pin without a Cast. That's why retyping `SelectedHero` only broke its Set node. **None** fits any object pin.
+- **Stale reference**: a variable still pointing at something that changed or no longer exists (a `SelectedEnemy` still holding the ghoul your Slash just killed). Avoid it by passing a value as a function input when it's only needed for one moment.
+- **Refactor**: changing how the code is built without changing what the player sees (making `BP_HeroUnit`, renaming `SelectedHero`). Test it by checking that nothing changed, then commit before adding new features.
