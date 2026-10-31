@@ -449,3 +449,13 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - In Range Min/Max swapped.
   - Painting inside a state-change function (`UpdateSelectedAbility`) ran while the hero switch was half done.
   - Many bugs at once in one review was overwhelming; one fix + one test at a time worked better.
+
+**2026-10-31 · M5-T4 (step) · Review session: comments + logic map** 🔄
+- **Learned:**
+  - **Comments say why, not what**: the nodes already show what happens. The "what breaks if I delete this?" test finds the why, and a step with no answer is redundant (`AreasToPaintInRange`).
+  - **Verb style**: function names give an order (`CheckRange`, no "s"); comments describe (`Checks whether…`, with "s"), like Unreal's own tooltips. Pick one per place and keep it.
+  - **Function Description** (entry node → Details) shows as a tooltip wherever the function is called.
+  - **Tooling**: MCP reads the wiring but not comment boxes; a Ctrl+C paste of a graph carries every comment as text.
+- **Tripped up:**
+  - Writing the "why" for a step that has none; it read like a trick question until the cups analogy.
+  - Burnout after ~5 h on M5-T4; the learning part was swapped for Claude's map and left for a short next session.
