@@ -432,3 +432,20 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Is Valid *after* Get (too late for the warning), then both Branch exits wired into the same node.
   - `RecentlySelectedButton` as a local variable; a Branch with True/False swapped; a SET instead of a GET in On Clicked; `ChangeSelectedUnit` re-passing the old ability and missing a Return Node on one path.
   - A toggle based on "the last click" breaks on the third click; the fix is comparing with the current state.
+
+**2026-10-31 · M5-T4 (step) · Range highlight** ✅
+- **Learned:**
+  - **Distance on a graph** with breadth-first search, returned as a **Map** (Area → steps), and **In Range** to filter it by `MinRange..MaxRange`.
+  - **Material Instances** for looks: one `M_Area` with a colour parameter, one MI per look.
+  - **Undo before you change**: a depaint reads the *current* selection, so it has to run while that selection is still the old one. Your fix moved the depaint to the start of every entry point.
+  - **Entry point vs step**: painting belongs to whatever starts the action (click, button), not to a function used inside a bigger change. `UpdateSelectedAbility` painting mid hero-switch is what repainted the old hero's Area.
+  - **A dispatcher call is synchronous**: listeners run right away, then the caller carries on.
+  - **For Each over an empty array** simply runs zero times; no Is Valid / `Get[0]` check needed (and `Get[0]` on an empty array logs a warning).
+  - **Reading your own graph as a system**: renaming, commenting and deleting redundant nodes made the next bug findable.
+- **Tripped up:**
+  - The depaint loop set each recorded Area to **InRange** instead of Normal, so "clearing" repainted purple; fixed once, then lost during a cleanup pass.
+  - `Clear` + `Return` wired on the loop's **Loop Body** instead of **Completed**, so only the first Area reset.
+  - Depaint gated on `SelectedArea` after deselect had already set it to None.
+  - In Range Min/Max swapped.
+  - Painting inside a state-change function (`UpdateSelectedAbility`) ran while the hero switch was half done.
+  - Many bugs at once in one review was overwhelming; one fix + one test at a time worked better.
