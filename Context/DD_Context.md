@@ -148,7 +148,8 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 *Leftovers from the range-highlight step (for the review session, none blocks play):*
 - *The ability button tells the controller to Depaint and Paint. The widget is running the controller's painting; a controller entry point (e.g. `SelectAbility`: update → depaint → paint) would let the button just say "clicked".*
 - *`DepaintSelections` is still gated on a valid `SelectedArea`; it works because a hero always brings an Area, but the hero-look reset and the list loop don't need that gate.*
-- *In ability mode the hero's unit isn't painted Selected (Area is Highlighted). Decide: should the hero still look selected while aiming?*
+- *~~In ability mode the hero's unit isn't painted Selected~~ fixed 2026-10-31: `PaintSelections` paints the hero Selected before the ability check.*
+- *~~Area selected with no hero~~ settled 2026-10-31 (#147): hero valid → hero Selected, then ability → range / no ability → Area + neighbours; hero not valid → validated Get `SelectedArea` → Area Highlighted only. Checked through MCP.*
 - *Debug prints: "Added … to PaintedAreasInRange array!" in `PaintSelections`, "END OF THE LOOP" in the bar.*
 - *Naming: `UpdateSelected…` (state change) vs `Paint…/Depaint…` (looks) vs `DeselectAreasUnits` (does two things). `GetAreaUnderCursor` output is `HitArea`, `GetUnitUnderCursor` output is `HitUnit`; `UpdateSelectedHero`'s input is still `NewUnit`.*
 
