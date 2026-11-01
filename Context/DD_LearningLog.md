@@ -473,3 +473,23 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Wanted to put painting inside `UpdateSelectedAbility`; that would paint mid hero-switch.
   - Worried that a one-purpose function (`SelectAbility`) was messy.
   - Claude's side: audit I2 was wrong, because the MCP graph text hides a second wire into the same node. Your screenshot caught it.
+
+**2026-11-01 · M5-T4 · Target and resolve** ✅
+- **Learned:**
+  - **Refactor before building**: `BP_HeroUnit` + an abstract `BP_Unit` let the types forbid mistakes (an enemy can't be stored as `SelectedHero`).
+  - **Breadth-first search** over `Neighbours`, returned as a **Map**, and **In Range** on its values: distance on a graph, worked out on demand.
+  - **Entry point vs step**, **Depaint first, Paint last**, and "every exit of an entry point paints": the whole look system fits in one rule.
+  - **A question vs an action**: `IsEnemyValidTarget` only answers; `ResolveAbility` does things. The target travels as an **input**, so there's nothing to clear.
+  - **Order is design**: damage before `AdvanceClock` is what makes a kill cancel that enemy's attack.
+  - **A child's event replaces the parent's**: an empty `Event ReceiveDamage` in `BP_EnemyUnit` swallowed every hit (Call to Parent Function from T1 again).
+  - **Interfaces share names and pins, not code**: each Blueprint writes its own body.
+  - **Disable / Enable Input** on the controller as a quick lock, and why a timer is only a placeholder for a real "busy" state.
+  - **Audit and naming**: reading the whole system as a map, then one verb per kind of job.
+- **Tripped up:**
+  - Painting inside a state-change function, and depaint/paint bugs from the range step (see that entry).
+  - First idea: reuse `PaintedAreasInRange` as the target rule. The looks list gets wiped by Depaint first, and rules shouldn't read looks.
+  - Planned a `SelectedEnemy` variable "to have one place", where an input pin does that without cleanup.
+  - Out-of-range exit ended without Paint (board went blank); `SelectAbility` called inside `IA_Select` (an entry point inside an entry point).
+  - `EnemiesToDamage` as a member array never emptied.
+  - The ability check only on the enemy branch, so Area clicks still deselected or moved the hero while aiming. You spotted this one yourself in play.
+  - Long days on the paint logic led to burnout; one fix + one test at a time worked.
