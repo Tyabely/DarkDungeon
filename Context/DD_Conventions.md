@@ -65,6 +65,19 @@ New asset type not in the table? Add a row here before using it.
 - **Variables:** PascalCase. Booleans (true/false) start with lowercase `b`: `bIsSelected`, `bCanAct`.
 - **Functions:** named as actions (verb first): `GetDistance`, `ApplyDamage`, `AdvanceClock`.
 - **Events / Event Dispatchers:** named as what happened: `OnUnitDied`, `OnClockAdvanced`.
+- **Verbs mean one thing each** (from the M5-T4 audit, #152). One word = one kind of job, so a name tells you what a function may touch:
+
+  | Verb | Job | Touches | Examples |
+  |---|---|---|---|
+  | `Get…` | Finds or works out an answer | Nothing (no state, no looks) | `GetUnitUnderCursor`, `GetDistancesFromArea`, `GetNextAttackDue` |
+  | `Update…(New…)` | The **only writer** of one stored variable; sets it, then announces `On…Changed` | State | `UpdateSelectedHero(NewHero)`, `UpdateSelectedAbility` |
+  | `Paint…` / `Depaint…` | Changes looks only, read from the state | Looks | `PaintSelections`, `PaintArea(SelectionType)`, `PaintUnit` |
+  | `Set…` (on a widget) | Copies values into the display | That widget | `SetAbilityDisplayInfo`, `SetUnitInfo`, `SetClockInfo` |
+  | `Handle…` | The event that answers a dispatcher or a notice; named after what it answers | Whatever the answer needs | `HandleHealthChanged` ← `OnHealthChanged`, `HandleUnitDeath` |
+  | Player action (`SelectAbility`, `MoveHeroToArea`, `DeselectAll`) | An **entry point**: what the player did; may Depaint → Update → Paint | Everything it needs | `SelectAbility`, `DeselectAll` |
+
+  Not used: **Change** (it's `Update`), so the same job never has two names.
+- **Inputs and references:** name the role, matching the pin's type: `NewHero` on a `BP_HeroUnit` pin (not `NewUnit`), `TargetArea` for a destination. No `Reference` suffix on object variables; the type already says it (`ClockWidget`, `BattlePlayerController`). Booleans returned from actions say what happened: `bMoveToSucceeded`.
 - **Readability:** comment boxes around groups of nodes, reroute nodes instead of wire spaghetti, big graphs collapsed into functions.
 - **Debug nodes:** temporary Prints get deleted once a bug is found. Vis Log nodes worth keeping sit in a comment box named **"Debug"**, so they're easy to spot and remove (Decision #116).
 

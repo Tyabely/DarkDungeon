@@ -145,7 +145,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
   - [x] Step 1 swapped (#148): free-form comments in the editor instead of a from-memory sketch. `PaintSelections` commented and reviewed (accurate, but "what" not "why"; mixed Check/Checks). MCP can't read comment boxes; a Ctrl+C paste can.
   - [x] Step 2 ✅ logic map published: **Battle Logic Map** artifact (https://claude.ai/artifact/RiiMfrKwqNp78coiBH3efo), read from 10 Blueprints: click, move, ability bar, Paint/Depaint, clock + attacks, startup, damage, state table, cleanup list (R1–R4, I1–I4, D1–D2, P1).
   - [x] Renames done during the session (checked through MCP): `AbilityBarWidget`, `ClockWidget`, `OnSelectedHeroChanged` / `OnSelectedAbilityChanged` (both Binds still work), `UpdateSelectedHero(NewHero)`, `MoveHeroToArea(TargetArea)`, `DeselectAreasUnits` → `DeselectAll`, `SetAreaLook` → `PaintArea`; `MoveHeroToArea` now sets the Area through `UpdateSelectedArea`.
-  - [ ] Step 3: naming rule for `DD_Conventions.md` (material: the map's I3 card).
+  - [x] Step 3: naming rule written into `DD_Conventions.md` §3 (one verb per kind of job, #152). Read it and push back on anything that doesn't fit.
   - [ ] Step 4: cleanup in the editor, one fix at a time, from the map's list. Progress 2026-11-01 (all checked through MCP; statuses also on the map's cards; local copy `Context/Reviews/M5-T4_BattleLogicMap.html`):
     - [x] R1: `PaintSelections` paints InRange and Add Uniques into `PaintedAreasInRange` inside the Map loop; second loop gone.
     - [x] R2: bar's Construct builds `AbilityButtons` with Make Array (before the Bind); `UpdateDisplay` loops over it with Array Index → Is Valid Index. Select node gone. `NumberOfAbilities` still exists, unused: delete.
@@ -153,12 +153,13 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
     - [x] R4: kept on purpose (#150).
     - [x] I1: controller `SelectAbility(NewAbility)` = Depaint → `UpdateSelectedAbility` → Paint; the button's On Clicked calls only that (#149).
     - [x] I2: wrong finding (Depaint's "Is Not Valid" also reaches the range loop; the MCP DSL hid the merged wire).
-    - [ ] I3: all renamed (`PaintUnit`/`PaintArea(SelectionType)`, `MoveToArea(TargetArea)` → `bMoveToSucceeded`, `UpdateDisplay(NewHero)`, `BattlePlayerController`, `SetAbilityDisplayInfo`) **except `HandHealthChanged`**.
+    - [x] I3: all renamed, `HandleHealthChanged` included (checked 2026-11-01). `NumberOfAbilities` deleted.
     - [x] I4: both ability widgets use Get Owning Player.
-    - [ ] D1 (`PaintButton` + `RecentlySelectedButton`), D2 (empty events on `BP_HeroUnit`), P1 (leftover prints).
-    - [ ] Comments on most nodes/functions (why, not what). Reviewed so far: `MoveToArea`, `MoveHeroToArea`, `SetAbilityDisplayInfo`, spawn loop/`SpawnUnit`, `FindEarliestAttacker`. To fix: spawn comment ("order fixed by the engine" is wrong: Get All Actors order isn't guaranteed; placement comes from `SpawnSide`); the counter reset after the spawn loop has no stated reason.
+    - [x] D1: `PaintButton` + `RecentlySelectedButton` gone. D2: Overlap/Tick gone from `BP_HeroUnit` (a BeginPlay with only the Parent call is left; harmless, delete if you like).
+    - [ ] P1 (checked 2026-11-01): the `HandleUnitDeath` queue print is gone. Still there: "END OF THE LOOP" (bar's `UpdateDisplay`), "is dead!" (`BP_Unit.HandleDeath`), the "ATTACKS!" **Print String** in `BP_EnemyUnit.ResolveAttack` (keep the string building, the Vis Log uses it), "Move Unsusscesful!" in `BP_Unit` BeginPlay (that one is the real refusal message from #51: keep it, fix the spelling).
+    - [x] Comments (why, not what): folded into normal building from now on (2026-11-01), not a separate pass. Reviewed so far: `MoveToArea`, `MoveHeroToArea`, `SetAbilityDisplayInfo`, spawn loop/`SpawnUnit`, `FindEarliestAttacker`. To fix: spawn comment ("order fixed by the engine" is wrong: Get All Actors order isn't guaranteed; placement comes from `SpawnSide`); the counter reset after the spawn loop has no stated reason.
 - [ ] Resolve (`IsEnemyValidTarget`, damage, `AdvanceClock`, clear ability) → right click (`IA_Cancel`, #138).
-- [ ] Refactor step 3 confirm: play-test still spawns all 5 units with `BP_Unit` abstract.
+- [x] Refactor step 3 confirm ✅: every play-test screenshot from 2026-10-31 shows all 5 units with `BP_Unit` abstract.
 
 *Leftovers from the range-highlight step (for the review session, none blocks play):*
 - *~~The ability button runs the controller's painting~~ fixed 2026-11-01: `SelectAbility` entry point (#149).*
@@ -168,7 +169,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - *Debug prints: "Added … to PaintedAreasInRange array!" in `PaintSelections`, "END OF THE LOOP" in the bar.*
 - *Naming: `UpdateSelected…` (state change) vs `Paint…/Depaint…` (looks) vs `DeselectAreasUnits` (does two things). `GetAreaUnderCursor` output is `HitArea`, `GetUnitUnderCursor` output is `HitUnit`; `UpdateSelectedHero`'s input is still `NewUnit`.*
 
-**Next session starts with…** the small leftovers from the map: delete `NumberOfAbilities`, rename `HandHealthChanged` → `HandleHealthChanged`, then D1, D2, P1. Then finish the comments (why, not what) and Step 3's naming rule. Then back to T4: resolve, which will be `SelectAbility`'s second caller via `IA_Cancel`. *(2026-11-01: R1–R4, I1, I2, I4 done.)*
+**Next:** finish P1 (4 prints, 5 minutes), then **T4 resolve**, step 1: `IsValidTarget(Ability, Unit) → Boolean` (#140: is an enemy, and its Area's distance from the hero's Area is within `MinRange..MaxRange`, using `GetDistancesFromArea` + Find). Comments (why, not what) are no longer a separate chore: write them as you build. After resolve: right click (`IA_Cancel`, #138). *(Review session 2026-11-01: R1–R4, I1–I4, D1, D2 and the naming rule done.)*
 
 **Carried over from M5-T3:**
 - T5: the slot reads `BaseCostTenths` from the DA itself. When the real cost lives on the hero, the slot should be *given* the cost (a `CostTenths` input or a `SetCost` function) instead of working it out (#131).
