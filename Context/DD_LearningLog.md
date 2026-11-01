@@ -459,3 +459,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - Writing the "why" for a step that has none; it read like a trick question until the cups analogy.
   - Burnout after ~5 h on M5-T4; the learning part was swapped for Claude's map and left for a short next session.
+
+**2026-11-01 · M5-T4 (step) · Review session: cleanup from the logic map** 🔄
+- **Learned:**
+  - **Make Array** builds an array from separate variables in a set order; looping over it replaces a counter variable and a 5-way Select.
+  - **Order of setup matters in Construct**: fill the array before the Bind and the first `UpdateDisplay(None)`, or that first call loops over nothing.
+  - **Bar vs button listen to different news**: the bar rebuilds when the *hero* changes; each button repaints when the *ability* changes. `UpdateSelectedHero` fires both (it clears the ability); `UpdateSelectedAbility` fires only its own.
+  - **Entry point function** (`SelectAbility`): one place holds "Depaint → Update → Paint". One purpose per function is the goal, not a smell.
+  - **Implicit mode**: `MoveToArea` uses "am I already on my Area's list?" to tell a spawn from a real move.
+  - **Comments**: an accurate "why" beats a "what", and a wrong comment is worse than none. "Should never happen" comments should also say what's already broken when they do (the unit is listed in two Areas).
+- **Tripped up:**
+  - A comment claimed ability clicks fire `OnSelectedHeroChanged`; the controller showed they don't.
+  - Wanted to put painting inside `UpdateSelectedAbility`; that would paint mid hero-switch.
+  - Worried that a one-purpose function (`SelectAbility`) was messy.
+  - Claude's side: audit I2 was wrong, because the MCP graph text hides a second wire into the same node. Your screenshot caught it.

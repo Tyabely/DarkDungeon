@@ -17,6 +17,7 @@ Repo root = this folder. Unreal project = `DarkDungeon_Project\`. Docs = `Contex
 | `Context/DD_Conventions.md` | Folders, naming, Blueprint style, Git rules |
 | `Context/DD_LearningLog.md` | Per task: what the user learned, what tripped them up |
 | `Context/DD_Decisions.md` | "Decided X over Y because Z" records |
+| `Context/Reviews/` | Code audits (HTML), e.g. `M5-T4_BattleLogicMap.html` with the cleanup list R1… |
 
 ## Session protocol
 **Start:** read `DD_Context.md` §4 (roadmap + Current focus). Confirm with the user which task this session is for. Read other docs only when the task needs them.

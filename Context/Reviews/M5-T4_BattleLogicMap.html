@@ -1,0 +1,716 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Battle Logic Map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column; diagrams sit in their own scroll boxes; cleanup list at the end as cards grouped by kind. */
+:root {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --fg: #1b1f27;
+  --muted: #5b6270;
+  --line: #d9dce3;
+  --accent: #a8561a;      /* torch amber */
+  --accent-soft: #f6e6d8;
+  --ok: #2f7a45;
+  --ok-soft: #e1f1e5;
+  --warn: #9a6a00;
+  --warn-soft: #f7edd2;
+  --info: #2c5f9e;
+  --info-soft: #dfe9f6;
+  --dead: #6b6f78;
+  --dead-soft: #e7e8eb;
+  --debug: #7a3f9a;
+  --debug-soft: #efe2f5;
+  --todo: #8a4b2a;
+  --todo-soft: #f3e4dc;
+  --code-bg: #eceef2;
+  --font-display: "Spectral", Georgia, "Times New Roman", serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Consolas, "Courier New", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14161b; --surface: #1c1f26; --fg: #e4e6eb; --muted: #9aa1ae; --line: #2e333d;
+    --accent: #e39b4b; --accent-soft: #3a2a1b;
+    --ok: #7fcf95; --ok-soft: #1d3326; --warn: #e2b54a; --warn-soft: #3a3016;
+    --info: #8fb6ea; --info-soft: #1c2a3d; --dead: #a6aab3; --dead-soft: #2a2d33;
+    --debug: #cf9be8; --debug-soft: #33243c; --todo: #e7a784; --todo-soft: #3a261c;
+    --code-bg: #252932;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #14161b; --surface: #1c1f26; --fg: #e4e6eb; --muted: #9aa1ae; --line: #2e333d;
+  --accent: #e39b4b; --accent-soft: #3a2a1b;
+  --ok: #7fcf95; --ok-soft: #1d3326; --warn: #e2b54a; --warn-soft: #3a3016;
+  --info: #8fb6ea; --info-soft: #1c2a3d; --dead: #a6aab3; --dead-soft: #2a2d33;
+  --debug: #cf9be8; --debug-soft: #33243c; --todo: #e7a784; --todo-soft: #3a261c;
+  --code-bg: #252932;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.wrap {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid;
+  gap: 56px;
+}
+header { display: grid; gap: 14px; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(32px, 6vw, 46px); line-height: 1.1; }
+h2 { font-size: 28px; line-height: 1.2; }
+h3 { font-size: 20px; }
+p { margin: 0; max-width: 68ch; }
+.lede { font-size: 19px; color: var(--muted); }
+code, .mono {
+  font-family: var(--font-mono);
+  font-size: 0.84em;
+  background: var(--code-bg);
+  padding: 0.08em 0.35em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+nav a {
+  display: inline-block;
+  font-size: 14px;
+  padding: 5px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--fg);
+  text-decoration: none;
+  background: var(--surface);
+}
+nav a:hover, nav a:focus-visible { border-color: var(--accent); color: var(--accent); outline: none; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 10px 24px; font-size: 15px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend svg { flex: none; }
+
+section { display: grid; gap: 16px; scroll-margin-top: 16px; }
+.sec-head { display: grid; gap: 6px; }
+.sec-head .eyebrow { color: var(--muted); }
+.diagram {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 20px;
+  overflow-x: auto;
+}
+.diagram pre.mermaid { margin: 0; background: transparent; min-width: 560px; }
+.notes { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 72ch; }
+.notes li::marker { color: var(--accent); }
+
+table { border-collapse: collapse; width: 100%; font-size: 15px; }
+.table-box { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; }
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+tr:last-child td { border-bottom: none; }
+
+.findings { display: grid; gap: 28px; }
+.group { display: grid; gap: 10px; }
+.group h3 { display: flex; align-items: center; gap: 10px; }
+.cards { display: grid; gap: 10px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.card.next { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.card-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+.card-id { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+.card-title { font-weight: 600; }
+.card p { font-size: 15.5px; }
+.card .where { font-size: 14px; color: var(--muted); }
+.pill {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill.ok { background: var(--ok-soft); color: var(--ok); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.info { background: var(--info-soft); color: var(--info); }
+.pill.dead { background: var(--dead-soft); color: var(--dead); }
+.pill.debug { background: var(--debug-soft); color: var(--debug); }
+.pill.todo { background: var(--todo-soft); color: var(--todo); }
+.pill.next { background: var(--accent-soft); color: var(--accent); }
+.fixed-list { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 15.5px; }
+.fixed-list li::marker { color: var(--ok); }
+footer { font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+
+@media (max-width: 560px) {
+  body { font-size: 16px; }
+  .diagram { padding: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">DarkDungeon · M5-T4 review · read from the editor 31 Oct 2026 · cleanup status updated 1 Nov</div>
+  <h1>Battle Logic Map</h1>
+  <p class="lede">Every click path, dispatcher and piece of selection state in the battle, read from 10 Blueprints through MCP. Use it as the map while you comment and clean up; the cleanup list at the bottom says what to touch first.</p>
+  <div class="legend" aria-label="Legend">
+    <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="26" y2="5" stroke="currentColor" stroke-width="2"/><path d="M26 1 L34 5 L26 9 Z" fill="currentColor"/></svg>direct call: "do this now"</span>
+    <span><svg width="34" height="10" aria-hidden="true"><line x1="0" y1="5" x2="26" y2="5" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3"/><path d="M26 1 L34 5 L26 9 Z" fill="currentColor"/></svg>dispatcher: "this happened", heard by whoever is bound</span>
+  </div>
+  <nav aria-label="Sections">
+    <ul>
+      <li><a href="#overview">Who talks to whom</a></li>
+      <li><a href="#click">Left click</a></li>
+      <li><a href="#move">Moving a hero</a></li>
+      <li><a href="#ability">Ability bar</a></li>
+      <li><a href="#paint">Paint and Depaint</a></li>
+      <li><a href="#clock">Clock and enemy attacks</a></li>
+      <li><a href="#startup">Startup</a></li>
+      <li><a href="#health">Damage and death</a></li>
+      <li><a href="#state">Selection state</a></li>
+      <li><a href="#cleanup">Cleanup list</a></li>
+    </ul>
+  </nav>
+</header>
+
+<section id="overview">
+  <div class="sec-head">
+    <div class="eyebrow">1 · The whole system</div>
+    <h2>Who talks to whom</h2>
+    <p>The controller is the hub: it reads the click, owns the selection, paints the board and spends time on the clock. Everything else either gets told what to do (solid arrows) or listens for news (dashed arrows).</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  IN(["Left click · IA_Select"])
+  subgraph PC["BP_BattlePlayerController"]
+    CLICK["IA_Select handler"]
+    UPD["UpdateSelectedHero · UpdateSelectedArea · UpdateSelectedAbility"]
+    PAINT["DepaintSelections · PaintSelections"]
+    MOVE["MoveHeroToArea"]
+  end
+  subgraph BOARD["Board"]
+    AREA["BP_Area · PaintArea · GetDistancesFromArea · AddUnit · RemoveUnit"]
+  end
+  subgraph UNITS["Units"]
+    UNIT["BP_Unit / BP_HeroUnit · MoveToArea · PaintUnitState"]
+    ENEMY["BP_EnemyUnit · ResolveAttack · UpdateIntentLabel"]
+    HP["BPC_Health · ApplyDamage"]
+  end
+  subgraph RULES["Rules"]
+    GS["BP_BattleGameState · AdvanceClock"]
+    GM["BP_BattleGameMode · ResolveNextAttack · HandleUnitDeath"]
+  end
+  subgraph UI["Widgets"]
+    BAR["WBP_AbilityBar · UpdateDisplay"]
+    BTN["WBP_AbilityButton ×5 · PaintAbilityDisplay"]
+    CLK["WBP_BattleClock · UpdateClock"]
+  end
+  IN --> CLICK
+  CLICK --> PAINT
+  CLICK --> UPD
+  CLICK --> MOVE
+  MOVE --> UPD
+  MOVE -->|"MoveToArea"| UNIT
+  UNIT -->|"AddUnit · RemoveUnit"| AREA
+  PAINT -->|"PaintArea · GetDistancesFromArea"| AREA
+  PAINT -->|"PaintUnitState"| UNIT
+  CLICK -->|"AdvanceClock"| GS
+  GS -.->|"OnClockAdvanced"| GM
+  GS -.->|"OnClockAdvanced"| CLK
+  GM -->|"ResolveAttack · UpdateIntentLabel"| ENEMY
+  UPD -.->|"OnSelectedHeroChanged"| BAR
+  UPD -.->|"OnSelectedAbilityChanged"| BTN
+  BAR -->|"SetAbilityDisplayName"| BTN
+  BTN -->|"UpdateSelectedAbility"| UPD
+  BTN -->|"Depaint, then Paint"| PAINT
+  HP -.->|"OnHealthChanged · OnDied"| UNIT
+  UNIT -->|"HandleUnitDeath"| GM
+</pre>
+  </div>
+  <ul class="notes">
+    <li>Only two places start player actions: the <code>IA_Select</code> handler and the ability button's <code>On Clicked</code>. The second one is why the button reaches into the controller's painting (cleanup <a href="#c-i1">I1</a>).</li>
+    <li>Three dispatchers carry news outward: <code>OnSelectedHeroChanged</code>, <code>OnSelectedAbilityChanged</code>, <code>OnClockAdvanced</code>. Nobody in the controller listens to its own dispatchers.</li>
+  </ul>
+</section>
+
+<section id="click">
+  <div class="sec-head">
+    <div class="eyebrow">2 · BP_BattlePlayerController · EventGraph</div>
+    <h2>Left click (<code>IA_Select</code>, Started)</h2>
+    <p>Every click starts by wiping the old looks while the old selection is still stored, then changes the state, then paints the new look (Decision #145). The one exit that doesn't paint is <code>DeselectAll</code>: nothing is selected afterwards, so there's nothing to paint.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  S(["Left click"]) --> D0["DepaintSelections · wipe old looks first"]
+  D0 --> U0["GetUnitUnderCursor → Cast to BP_HeroUnit"]
+  U0 -->|"cast succeeds: a hero"| Q2{"Same as SelectedHero?"}
+  Q2 -->|"yes"| DA["DeselectAll · Area = None, Hero = None"]
+  Q2 -->|"no"| H1["UpdateSelectedHero(hero) · clears ability, broadcasts OnSelectedHeroChanged"]
+  H1 --> H2["UpdateSelectedArea(SelectedHero.CurrentArea)"]
+  H2 --> P1["PaintSelections"]
+  U0 -->|"cast fails: enemy or nothing"| A0["GetAreaUnderCursor"]
+  A0 --> Q3{"Area hit?"}
+  Q3 -->|"no"| DA
+  Q3 -->|"yes"| Q4{"Same as SelectedArea?"}
+  Q4 -->|"yes"| DA
+  Q4 -->|"no"| Q5{"SelectedHero valid?"}
+  Q5 -->|"no"| A1["UpdateSelectedArea(area)"]
+  A1 --> P2["PaintSelections"]
+  Q5 -->|"yes"| M1["MoveHeroToArea(area)"]
+  M1 --> Q6{"Move succeeded?"}
+  Q6 -->|"yes"| M2["AdvanceClock(SelectedHero.BaseMoveCost)"]
+  M2 --> P3["PaintSelections"]
+  Q6 -->|"no"| P4["PaintSelections"]
+</pre>
+  </div>
+  <ul class="notes">
+    <li>Clicking an enemy falls through to the Area path, because the cast to <code>BP_HeroUnit</code> fails. That's the spot where resolve will branch off ("is an ability selected?").</li>
+    <li>With an ability selected, an Area click still moves the hero. Decision #136 says it shouldn't; that's part of the resolve step, not built yet (<a href="#c-t1">T1</a>).</li>
+    <li><code>DeselectAll</code> calls <code>UpdateSelectedHero(None)</code>, which also clears the ability, so all three pieces of state end up empty.</li>
+  </ul>
+</section>
+
+<section id="move">
+  <div class="sec-head">
+    <div class="eyebrow">3 · Controller → BP_Unit → BP_Area</div>
+    <h2>Moving a hero</h2>
+    <p><code>MoveHeroToArea</code> asks the unit to move, and only updates the selection when the unit says yes. The unit does the real checks: neighbour, capacity, then leaving the old Area.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  C(["MoveHeroToArea(TargetArea)"]) --> U["SelectedHero.MoveToArea(TargetArea)"]
+  U --> V{"TargetArea valid?"}
+  V -->|"no"| F0["return false"]
+  V -->|"yes"| IN{"Am I already listed in CurrentArea.UnitsInArea?"}
+  IN -->|"no: first placement at spawn"| FA["TargetArea.AddUnit(self) · return its result"]
+  IN -->|"yes"| NB{"TargetArea in CurrentArea.Neighbours?"}
+  NB -->|"no"| F1["Print: This area is not a neighbour! · return false"]
+  NB -->|"yes"| ADD{"TargetArea.AddUnit(self) · room left under Capacity?"}
+  ADD -->|"no"| F2["return false"]
+  ADD -->|"yes"| RM{"CurrentArea.RemoveUnit(self)?"}
+  RM -->|"no"| F3["Print error · return false"]
+  RM -->|"yes"| OK["CurrentArea = TargetArea · return true"]
+  OK --> SEL["Controller: UpdateSelectedArea(SelectedHero.CurrentArea) · return true"]
+</pre>
+  </div>
+  <ul class="notes">
+    <li><code>AddUnit</code> and <code>RemoveUnit</code> both call <code>ArrangeUnits</code>, which lays the units out inside the Area using the slot layouts.</li>
+    <li>A failed move prints twice: once in <code>MoveToArea</code> ("not a neighbour"), once in the controller ("Hero move not succeed!"). See <a href="#c-r3">R3</a>.</li>
+  </ul>
+</section>
+
+<section id="ability">
+  <div class="sec-head">
+    <div class="eyebrow">4 · Controller ↔ WBP_AbilityBar ↔ WBP_AbilityButton</div>
+    <h2>Ability bar</h2>
+    <p>The bar fills its five slots when the selected hero changes. Each slot listens for the selected ability and paints itself green when the announced ability is its own.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  subgraph HERO["When the hero changes"]
+    H0(["UpdateSelectedHero"]) -.->|"OnSelectedHeroChanged"| B0["Bar: UpdateDisplay(NewUnit)"]
+    B0 --> BV{"NewUnit valid and its UnitData is a PDA_Hero?"}
+    BV -->|"yes"| BS["AbilitiesToDisplay = AbilitySet"]
+    BV -->|"no"| BC["Clear AbilitiesToDisplay"]
+    BS --> BL["For index 0 … NumberOfAbilities − 1 · Select picks slot by index"]
+    BC --> BL
+    BL --> BI{"IsValidIndex(AbilitiesToDisplay, index)?"}
+    BI -->|"yes"| SA["slot.SetAbilityDisplayName(ability) · name, cost in s, enabled"]
+    BI -->|"no"| SN["slot.SetAbilityDisplayName(None) · blank, disabled"]
+  end
+  subgraph CLICK["When a slot is clicked"]
+    K0(["Button: On Clicked"]) --> KS["Controller: SelectAbility(AbilityToDisplay)"]
+    KS --> K6["DepaintSelections"]
+    K6 --> K1["Controller: UpdateSelectedAbility(AbilityToDisplay)"]
+    K1 --> K2{"Same as SelectedAbility?"}
+    K2 -->|"yes"| K3["SelectedAbility = None"]
+    K2 -->|"no"| K4["SelectedAbility = this ability"]
+    K3 --> K5["broadcast OnSelectedAbilityChanged"]
+    K4 --> K5
+    K5 -.-> PA["Every slot: PaintAbilityDisplay · mine and valid → green, else white"]
+    K5 --> K7["PaintSelections"]
+  end
+</pre>
+  </div>
+  <ul class="notes">
+    <li>The <code>IsValid</code> inside <code>PaintAbilityDisplay</code> is needed: an empty slot holds None, and None equals None, so without it every empty slot would turn green when the ability is cleared.</li>
+    <li>Since 1 Nov the button only says "clicked": <code>SelectAbility</code> on the controller runs Depaint → Update → Paint (<a href="#c-i1">I1</a>).</li>
+  </ul>
+</section>
+
+<section id="paint">
+  <div class="sec-head">
+    <div class="eyebrow">5 · BP_BattlePlayerController · functions</div>
+    <h2>Paint and Depaint</h2>
+    <p><code>PaintSelections</code> turns the current state into looks. <code>DepaintSelections</code> resets exactly what Paint may have touched, using <code>PaintedAreasInRange</code> as its memory of the range.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  subgraph PAINT["PaintSelections"]
+    P0(["start"]) --> PH{"SelectedHero valid?"}
+    PH -->|"no: Area picked with no hero"| PA0["SelectedArea valid? → PaintArea Highlighted"]
+    PH -->|"yes"| PU["hero: PaintUnitState Selected"]
+    PU --> PB{"SelectedAbility valid?"}
+    PB -->|"no: show moves"| PN["SelectedArea Highlighted · each Neighbour → Neighbour"]
+    PB -->|"yes: show range"| PR0["SelectedArea Highlighted"]
+    PR0 --> PR1["GetDistancesFromArea → Map of Area → steps"]
+    PR1 --> PR2["For each entry: steps in MinRange … MaxRange? → add to AreasToPaintInRange"]
+    PR2 --> PR3["For each in AreasToPaintInRange: PaintArea InRange · add to PaintedAreasInRange"]
+  end
+  subgraph DEPAINT["DepaintSelections"]
+    D0(["start"]) --> DQ{"SelectedArea valid?"}
+    DQ -->|"no: skip the Area part"| D2
+    DQ -->|"yes"| D1["SelectedArea → Normal · its Neighbours → Normal"]
+    D1 --> D2["each in PaintedAreasInRange → Normal · Clear the list"]
+    D2 --> D3["SelectedHero valid? → PaintUnitState Normal"]
+  end
+</pre>
+  </div>
+  <ul class="notes">
+    <li><code>GetDistancesFromArea</code> (on <code>BP_Area</code>) spreads out ring by ring: ring 0 is the start Area, ring N+1 is every neighbour of ring N not seen yet. It stops when a pass adds nothing new.</li>
+    <li>Two loops and a list where one loop would do: <a href="#c-r1">R1</a>. With no <code>SelectedArea</code>, Depaint still clears the range and the hero (<a href="#c-i2">I2</a>, corrected).</li>
+  </ul>
+</section>
+
+<section id="clock">
+  <div class="sec-head">
+    <div class="eyebrow">6 · BP_BattleGameState → BP_BattleGameMode → BP_EnemyUnit</div>
+    <h2>Clock and enemy attacks</h2>
+    <p>Spending time is the only thing that moves the battle forward. When the clock moves, the Game Mode lets every enemy whose attack is due strike, one at a time, earliest first.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  A0(["AdvanceClock(BattleClockIncrease)"]) --> A1["ClockTimeTenths += BattleClockIncrease"]
+  A1 -.->|"OnClockAdvanced(NewTimeTenths)"| W["WBP_BattleClock: SetClockInfo · shows 12.5s"]
+  A1 -.->|"OnClockAdvanced(NewTimeTenths)"| R0["Game Mode: ResolveNextAttack(NewTimeTenths)"]
+  R0 --> R1["ResolveTimeTenths = NewTimeTenths · FindEarliestAttacker"]
+  R1 --> R2{"Any enemy left?"}
+  R2 -->|"no"| RX["stop"]
+  R2 -->|"yes"| R3{"Its attack due ≤ ResolveTimeTenths?"}
+  R3 -->|"no"| R4["every enemy in EnemyQueue: UpdateIntentLabel"]
+  R3 -->|"yes"| R5["enemy.ResolveAttack · print, InternalClock += attack time, SelectNextAttack"]
+  R5 --> R6["Delay 0.1 s"]
+  R6 --> R7["every enemy: UpdateIntentLabel"]
+  R7 --> R0b["ResolveNextAttack again · same time"]
+  R0b --> R1
+</pre>
+  </div>
+  <ul class="notes">
+    <li>Each enemy keeps its own <code>InternalClockTenths</code>. "Due" = its internal clock + the current attack's time, from <code>GetNextAttackDue</code>.</li>
+    <li><code>ResolveAttack</code> only prints and logs for now; it doesn't damage a hero yet (<a href="#c-t2">T2</a>).</li>
+  </ul>
+</section>
+
+<section id="startup">
+  <div class="sec-head">
+    <div class="eyebrow">7 · BeginPlay and Construct events</div>
+    <h2>Startup</h2>
+    <p>What has to exist before the first click. These run in separate actors, so treat each lane as its own story; Unreal doesn't promise which BeginPlay runs first.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  subgraph GM["BP_BattleGameMode · BeginPlay"]
+    G1["Bind ResolveNextAttack to OnClockAdvanced"] --> G2["Get all BP_Area → Areas"]
+    G2 --> G3["For each Area: SpawnUnit(SpawnSide, TopCube location, Area)"]
+    G3 --> G4["Hero side → next from HeroesRoster as BP_HeroUnit · Enemy side → next from EnemiesRoster as BP_EnemyUnit, added to EnemyQueue"]
+  end
+  subgraph AR["BP_Area · BeginPlay"]
+    A1["Get all other BP_Area"] --> A2["IsNeighbour? → add to Neighbours"]
+  end
+  subgraph UN["BP_Unit · Construction Script, then BeginPlay"]
+    U0["Team from UnitData · InitHealth(BaseMaxHealth)"] --> U1["Get health bar widget · bind OnHealthChanged and OnDied · draw label"]
+    U1 --> U2["Async load mesh · MoveToArea(CurrentArea) registers the unit · fails → destroy"]
+    U2 --> U3["Mesh and material loaded → dynamic material → PaintUnitState Normal"]
+    U3 --> U4["Enemies also: AttackSet from PDA_Enemy → SelectNextAttack → UpdateIntentLabel(0)"]
+  end
+  subgraph PCB["BP_BattlePlayerController · BeginPlay"]
+    C1["Add IMC_Battle mapping"] --> C2{"CameraActor in level?"}
+    C2 -->|"no"| C3["Print: No Camera in the Level!"]
+    C2 -->|"yes"| C4["View through it · create WBP_BattleClock and show current time · create WBP_AbilityBar"]
+  end
+  subgraph WG["Widgets · Construct"]
+    W1["Bar: bind OnSelectedHeroChanged → UpdateDisplay(None)"]
+    W2["Each button: bind OnSelectedAbilityChanged → PaintAbilityDisplay(None)"]
+    W3["Clock: bind OnClockAdvanced → UpdateClock"]
+  end
+  C4 --> W1
+</pre>
+  </div>
+</section>
+
+<section id="health">
+  <div class="sec-head">
+    <div class="eyebrow">8 · BPI_Damageable → BPC_Health → BP_Unit → Game Mode</div>
+    <h2>Damage and death</h2>
+    <p>Built in T1 and tested with debug hits. Nothing calls <code>ReceiveDamage</code> in play yet; resolve will be the first caller.</p>
+  </div>
+  <div class="diagram">
+<pre class="mermaid">
+flowchart TD
+  D0(["ReceiveDamage(DamageReceived) · BPI_Damageable on BP_Unit"]) --> D1["BPC_Health.ApplyDamage"]
+  D1 --> D2["CurrentHealth = clamp(Current − Damage, 0, MaximumHealth)"]
+  D2 -.->|"OnHealthChanged"| D3["Unit: HandHealthChanged → health bar SetUnitInfo"]
+  D2 --> D4{"CurrentHealth = 0?"}
+  D4 -->|"yes"| D5["broadcast OnDied"]
+  D5 -.-> D6["Unit: Death · print"]
+  D6 --> D7["Game Mode: HandleUnitDeath(unit) · enemy → removed from EnemyQueue · hero → nothing yet"]
+  D7 --> D8["DestroyActor"]
+</pre>
+  </div>
+</section>
+
+<section id="state">
+  <div class="sec-head">
+    <div class="eyebrow">9 · The rule check</div>
+    <h2>Selection state: one way in</h2>
+    <p>The <code>Update…</code> rule says every piece of selection state has exactly one function that writes it. As of today it holds for all three.</p>
+  </div>
+  <div class="table-box">
+    <table>
+      <thead><tr><th>Variable</th><th>Type</th><th>Only writer</th><th>Announces</th><th>Called from</th></tr></thead>
+      <tbody>
+        <tr><td><code>SelectedHero</code></td><td>BP_HeroUnit</td><td><code>UpdateSelectedHero</code></td><td><code>OnSelectedHeroChanged</code></td><td>click (hero path), <code>DeselectAll</code></td></tr>
+        <tr><td><code>SelectedArea</code></td><td>BP_Area</td><td><code>UpdateSelectedArea</code></td><td>nothing</td><td>click (hero and Area paths), <code>MoveHeroToArea</code>, <code>DeselectAll</code></td></tr>
+        <tr><td><code>SelectedAbility</code></td><td>PDA_HeroAbility</td><td><code>UpdateSelectedAbility</code></td><td><code>OnSelectedAbilityChanged</code></td><td>ability button, <code>UpdateSelectedHero</code> (clears it)</td></tr>
+        <tr><td><code>PaintedAreasInRange</code></td><td>array of BP_Area</td><td>Paint adds · Depaint clears</td><td>nothing</td><td>looks bookkeeping, not selection</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="cleanup">
+  <div class="sec-head">
+    <div class="eyebrow">10 · From the review</div>
+    <h2>Cleanup list</h2>
+    <p>One at a time, play-test after each. Before deleting or merging anything, ask "what breaks without it?" If you can name something, write that down as the comment instead.</p>
+  </div>
+
+  <div class="findings">
+
+    <div class="group">
+      <h3><span class="pill ok">done today</span> Already fixed</h3>
+      <ul class="fixed-list">
+        <li><code>AbilityBarWidgerReference</code> → <code>AbilityBarWidget</code>, <code>ClockWidgetReference</code> → <code>ClockWidget</code></li>
+        <li>Dispatchers → <code>OnSelectedHeroChanged</code> / <code>OnSelectedAbilityChanged</code>, and both Bind nodes still work</li>
+        <li><code>UpdateSelectedHero(NewHero)</code>, <code>MoveHeroToArea(TargetArea)</code>, <code>DeselectAreasUnits</code> → <code>DeselectAll</code></li>
+        <li><code>MoveHeroToArea</code> now goes through <code>UpdateSelectedArea</code>, so the one-way-in rule holds</li>
+        <li><code>SetAreaLook</code> → <code>PaintArea</code></li>
+      </ul>
+    </div>
+
+    <div class="group">
+      <h3><span class="pill warn">redundant</span> Does the same work twice</h3>
+      <div class="cards">
+        <div class="card" id="c-r1">
+          <div class="card-top"><span class="card-id">R1</span><span class="card-title">One loop for the range, not two</span><span class="pill ok">done 1 Nov</span></div>
+          <p>The Map loop collects in-range Areas into <code>AreasToPaintInRange</code>, then a second loop paints them and records them. Paint and record inside the first loop's True branch, then delete the second loop and the local variable.</p>
+          <p class="where"><code>PaintSelections</code> · test: Shot still lights 1–3, Slash lights 0, switching heroes clears it</p>
+        </div>
+        <div class="card" id="c-r2">
+          <div class="card-top"><span class="card-id">R2</span><span class="card-title">Five slots by hand</span><span class="pill ok">done 1 Nov</span></div>
+          <p><code>NumberOfAbilities</code> repeats the slot count, and the 5-way Select picks a slot by index. An array of the five buttons would replace both: loop over the array, index the abilities.</p>
+          <p class="where"><code>WBP_AbilityBar.UpdateDisplay</code> · carried over from T3</p>
+        </div>
+        <div class="card" id="c-r3">
+          <div class="card-top"><span class="card-id">R3</span><span class="card-title">A failed move prints twice</span><span class="pill ok">done 1 Nov</span></div>
+          <p><code>BP_Unit.MoveToArea</code> prints "not a neighbour" and the controller prints "Hero move not succeed!". Keep the one that says <em>why</em> (the unit's) and drop the controller's, or turn both into a Vis Log in a "Debug" box.</p>
+          <p class="where"><code>BP_BattlePlayerController</code> EventGraph, <code>BP_Unit.MoveToArea</code></p>
+        </div>
+        <div class="card" id="c-r4">
+          <div class="card-top"><span class="card-id">R4</span><span class="card-title">Two sources for a unit's team</span><span class="pill ok">kept on purpose</span></div>
+          <p><strong>1 Nov:</strong> kept. The Switch's Hero branch is where hero death will go (T2).</p>
+          <p><code>HandleUnitDeath</code> reads the team from <code>UnitData</code>, while <code>BP_Unit</code> copies it into its own <code>Team</code> variable. The Switch + Cast could also be just the Cast: success means enemy.</p>
+          <p class="where"><code>BP_BattleGameMode.HandleUnitDeath</code> · carried over from T1, fine to leave</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3><span class="pill info">inconsistent</span> Works, but breaks a rule you set</h3>
+      <div class="cards">
+        <div class="card next" id="c-i1">
+          <div class="card-top"><span class="card-id">I1</span><span class="card-title">The button runs the controller's painting, in the wrong order</span><span class="pill ok">done 1 Nov</span></div>
+          <p><strong>1 Nov:</strong> controller <code>SelectAbility(NewAbility)</code> = Depaint → <code>UpdateSelectedAbility</code> → Paint; On Clicked calls only that (Decision #149).</p>
+          <p>On Clicked does Update → Depaint → Paint. The rule (#145) is Depaint → Update → Paint, and the widget shouldn't need to know painting exists. Give the controller one entry point, e.g. <code>SelectAbility(Ability)</code> = Depaint → <code>UpdateSelectedAbility</code> → Paint, and let the button call only that.</p>
+          <p class="where"><code>WBP_AbilityButton</code> On Clicked · fixes the order and the reach-in together</p>
+        </div>
+        <div class="card" id="c-i2">
+          <div class="card-top"><span class="card-id">I2</span><span class="card-title">Depaint gives up when no Area is selected</span><span class="pill dead">wrong finding</span></div>
+          <p><strong>1 Nov, correction:</strong> not true. "Is Not Valid" is wired into the range loop too, so the range and the hero still get cleared. The MCP graph text shows a node only once, under its first incoming wire, and this review missed the second one.</p>
+          <p>Everything in <code>DepaintSelections</code> sits behind "SelectedArea valid?". Only the Area + neighbours reset needs it; the range list and the hero's look don't. It works today because a hero always brings an Area.</p>
+          <p class="where"><code>DepaintSelections</code></p>
+        </div>
+        <div class="card" id="c-i3">
+          <div class="card-top"><span class="card-id">I3</span><span class="card-title">Names still out of step</span><span class="pill warn">one left</span></div>
+          <p><strong>1 Nov:</strong> done: <code>PaintUnit(SelectionType)</code> / <code>PaintArea(SelectionType)</code>, <code>MoveToArea(TargetArea)</code> → <code>bMoveToSucceeded</code>, <code>UpdateDisplay(NewHero)</code>, <code>BattlePlayerController</code>, <code>SetAbilityDisplayInfo</code>. Left: <code>HandHealthChanged</code> on BP_Unit.</p>
+          <p><code>PaintUnitState(Selection)</code> vs <code>PaintArea(NewPaint)</code>: pick one pattern, e.g. <code>PaintUnit(NewLook)</code> and <code>PaintArea(NewLook)</code>. <code>BP_Unit.MoveToArea(AreaToMove)</code> → <code>TargetArea</code> like the controller. Output <code>bMoveToAreSucceeded</code> is missing an "a". <code>HandHealthChanged</code> → <code>HandleHealthChanged</code>. The bar's <code>UpdateDisplay(NewUnit)</code> is typed BP_HeroUnit → <code>NewHero</code>. The button's <code>BattlePlayerControllerReference</code> → drop "Reference", as you did for the widgets. <code>SetAbilityDisplayName</code> also sets cost and enabled → <code>SetAbility</code>.</p>
+          <p class="where">BP_Unit, WBP_AbilityBar, WBP_AbilityButton · good material for the naming rule in DD_Conventions</p>
+        </div>
+        <div class="card" id="c-i4">
+          <div class="card-top"><span class="card-id">I4</span><span class="card-title">Widgets find the controller by player index</span><span class="pill ok">done 1 Nov</span></div>
+          <p>Both ability widgets use <code>Get Player Controller (0)</code>. <code>Get Owning Player</code> says what's meant: the controller that created this widget.</p>
+          <p class="where"><code>WBP_AbilityBar</code>, <code>WBP_AbilityButton</code> Construct · carried over from T3</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3><span class="pill dead">unused</span> Nothing calls it</h3>
+      <div class="cards">
+        <div class="card next" id="c-d1">
+          <div class="card-top"><span class="card-id">D1</span><span class="card-title"><code>PaintButton</code> on the ability bar</span></div>
+          <p>Left over from before the buttons painted themselves. I found no caller in either widget. Right-click it → Find References to confirm, then delete it and <code>RecentlySelectedButton</code>.</p>
+          <p class="where"><code>WBP_AbilityBar</code></p>
+        </div>
+        <div class="card" id="c-d2">
+          <div class="card-top"><span class="card-id">D2</span><span class="card-title">Empty events on <code>BP_HeroUnit</code></span></div>
+          <p><code>ActorBeginOverlap</code> and <code>Tick</code> have nothing attached. Delete them so the graph shows only what the hero adds.</p>
+          <p class="where"><code>BP_HeroUnit</code> EventGraph</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3><span class="pill debug">debug</span> Prints to remove or box</h3>
+      <div class="cards">
+        <div class="card">
+          <div class="card-top"><span class="card-id">P1</span><span class="card-title">Leftover prints</span></div>
+          <p>"END OF THE LOOP" (ability bar) · the EnemyQueue print loop in <code>HandleUnitDeath</code> · "is dead!" (<code>BP_Unit.Death</code>) · "Move Unsusscesful!" (<code>BP_Unit</code> BeginPlay, also a typo) · "ATTACKS!" print in <code>ResolveAttack</code>. The Vis Log nodes in <code>ResolveAttack</code> and <code>ResolveNextAttack</code> can stay, inside a comment box named "Debug" (#116).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <h3><span class="pill todo">not built yet</span> Planned for T4, so no fix needed</h3>
+      <div class="cards">
+        <div class="card" id="c-t1">
+          <div class="card-top"><span class="card-id">T1</span><span class="card-title">Resolve</span></div>
+          <p>Enemy click with an ability selected → <code>IsEnemyValidTarget</code> → damage → <code>AdvanceClock(cost)</code> → clear the ability. Area clicks stop moving the hero while an ability is selected (#136).</p>
+        </div>
+        <div class="card" id="c-t2">
+          <div class="card-top"><span class="card-id">T2</span><span class="card-title">Enemy attacks hit heroes, right click cancels</span></div>
+          <p><code>ResolveAttack</code> calls <code>ReceiveDamage</code> on a hero. <code>IA_Cancel</code> clears the ability, then the hero (#138). Hero death in <code>HandleUnitDeath</code> must also clear the selection.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  Read through Unreal MCP (read-only) from BP_BattlePlayerController, BP_Area, BP_Unit, BP_HeroUnit, BP_EnemyUnit, BPC_Health, BP_BattleGameMode, BP_BattleGameState, WBP_AbilityBar, WBP_AbilityButton and WBP_BattleClock. Comment boxes aren't readable through MCP, so this map shows the wiring, not your comments.
+</footer>
+
+</div>
+
+<!--claude-mermaid-runtime-begin:3477-->
+<style>.mermaid-diagram{margin-block:4px}.mermaid-diagram svg{display:block;margin:0 auto;max-width:100%;height:auto}</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
+<script>(function(){
+var CFG={"palettes":{"light":{"surface":"#f4efe4","text":"#42392e","line":"#8a7f6d","border":"#7a6c52","bg":"#fffdf8"},"dark":{"surface":"#262b34","text":"#f2f3f5","line":"#a8adb8","border":"#9aa4b8","bg":"#1f232b"}}};
+if(typeof mermaid==='undefined')return;
+var pres=Array.prototype.slice.call(document.querySelectorAll('pre.mermaid')).filter(function(p){if(p.hasAttribute('data-claude-mermaid-claimed'))return false;p.setAttribute('data-claude-mermaid-claimed','1');return true;});
+if(!pres.length)return;
+var mq=window.matchMedia?window.matchMedia('(prefers-color-scheme: dark)'):null;
+var root=document.documentElement;
+var items=pres.map(function(pre){
+var mount=document.createElement('div');mount.className='mermaid-diagram';
+return {pre:pre,mount:mount,src:pre.textContent||''};
+});
+var seq=0;
+var renderGen=0;
+var lastKey='';
+function pageBg(fallback){
+var els=[document.body,document.documentElement];
+for(var i=0;i<els.length;i++){
+var c=els[i]&&getComputedStyle(els[i]).backgroundColor;
+if(c&&c!=='transparent'&&c!=='rgba(0, 0, 0, 0)')return c;
+}
+return fallback;
+}
+function render(){
+var theme=root.getAttribute('data-theme');
+var dark=theme==='dark'||(!!(mq&&mq.matches)&&theme!=='light');
+var pal=dark?CFG.palettes.dark:CFG.palettes.light;
+var bg=pageBg(pal.bg);
+var key=(dark?'d':'l')+'|'+bg;
+if(key===lastKey)return;
+lastKey=key;
+var gen=++renderGen;
+var font=getComputedStyle(document.body).fontFamily||'sans-serif';
+var nat={useMaxWidth:false};
+mermaid.initialize({
+startOnLoad:false,securityLevel:'strict',theme:'base',
+flowchart:nat,sequence:nat,er:nat,state:nat,class:nat,pie:nat,
+gantt:nat,journey:nat,timeline:nat,gitGraph:nat,mindmap:nat,xyChart:nat,
+quadrantChart:nat,sankey:nat,c4:nat,requirement:nat,block:nat,
+packet:nat,kanban:nat,architecture:nat,radar:nat,
+themeVariables:{background:bg,mainBkg:pal.surface,primaryColor:pal.surface,
+primaryTextColor:pal.text,lineColor:pal.line,primaryBorderColor:pal.border,
+nodeBorder:pal.border,clusterBorder:pal.border,edgeLabelBackground:bg,
+clusterBkg:'rgba(127,127,127,0.07)',titleColor:pal.text,
+darkMode:dark,rowOdd:bg,rowEven:'rgba(127,127,127,0.07)',
+attributeBackgroundColorOdd:bg,attributeBackgroundColorEven:'rgba(127,127,127,0.07)',
+fontSize:'16px',fontFamily:font},
+themeCSS:'.node rect, .node circle, .node polygon, .node path, .cluster rect { stroke-width: 2px; }'
+});
+items.forEach(function(it){
+var id='claude-mermaid-'+seq++;
+mermaid.render(id,it.src).then(function(r){
+if(gen!==renderGen)return;
+var prev=it.pre.previousElementSibling;
+if(prev&&prev.className==='mermaid-diagram'&&prev!==it.mount)return;
+it.mount.innerHTML=r.svg;
+if(!it.mount.parentNode)it.pre.parentNode.insertBefore(it.mount,it.pre);
+it.pre.style.display='none';
+},function(){
+var scratch=document.getElementById(id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+scratch=document.getElementById('d'+id);
+if(scratch)scratch.parentNode.removeChild(scratch);
+if(gen!==renderGen)return;
+if(it.mount.parentNode)it.mount.parentNode.removeChild(it.mount);
+it.pre.style.display='';
+});
+});
+}
+render();
+if(mq&&mq.addEventListener)mq.addEventListener('change',render);
+if(typeof MutationObserver!=='undefined')new MutationObserver(render).observe(root,{attributes:true,attributeFilter:['data-theme']});
+})();</script>
+<!--claude-mermaid-runtime-end-->
+
+</body></html>

@@ -146,19 +146,29 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
   - [x] Step 2 ✅ logic map published: **Battle Logic Map** artifact (https://claude.ai/artifact/RiiMfrKwqNp78coiBH3efo), read from 10 Blueprints: click, move, ability bar, Paint/Depaint, clock + attacks, startup, damage, state table, cleanup list (R1–R4, I1–I4, D1–D2, P1).
   - [x] Renames done during the session (checked through MCP): `AbilityBarWidget`, `ClockWidget`, `OnSelectedHeroChanged` / `OnSelectedAbilityChanged` (both Binds still work), `UpdateSelectedHero(NewHero)`, `MoveHeroToArea(TargetArea)`, `DeselectAreasUnits` → `DeselectAll`, `SetAreaLook` → `PaintArea`; `MoveHeroToArea` now sets the Area through `UpdateSelectedArea`.
   - [ ] Step 3: naming rule for `DD_Conventions.md` (material: the map's I3 card).
-  - [ ] Step 4: cleanup in the editor, one fix at a time, from the map's list. **Start with R1** (one loop for the range in `PaintSelections`).
+  - [ ] Step 4: cleanup in the editor, one fix at a time, from the map's list. Progress 2026-11-01 (all checked through MCP; statuses also on the map's cards; local copy `Context/Reviews/M5-T4_BattleLogicMap.html`):
+    - [x] R1: `PaintSelections` paints InRange and Add Uniques into `PaintedAreasInRange` inside the Map loop; second loop gone.
+    - [x] R2: bar's Construct builds `AbilityButtons` with Make Array (before the Bind); `UpdateDisplay` loops over it with Array Index → Is Valid Index. Select node gone. `NumberOfAbilities` still exists, unused: delete.
+    - [x] R3: controller's "Hero move not succeed!" print gone; failed move → `PaintSelections`.
+    - [x] R4: kept on purpose (#150).
+    - [x] I1: controller `SelectAbility(NewAbility)` = Depaint → `UpdateSelectedAbility` → Paint; the button's On Clicked calls only that (#149).
+    - [x] I2: wrong finding (Depaint's "Is Not Valid" also reaches the range loop; the MCP DSL hid the merged wire).
+    - [ ] I3: all renamed (`PaintUnit`/`PaintArea(SelectionType)`, `MoveToArea(TargetArea)` → `bMoveToSucceeded`, `UpdateDisplay(NewHero)`, `BattlePlayerController`, `SetAbilityDisplayInfo`) **except `HandHealthChanged`**.
+    - [x] I4: both ability widgets use Get Owning Player.
+    - [ ] D1 (`PaintButton` + `RecentlySelectedButton`), D2 (empty events on `BP_HeroUnit`), P1 (leftover prints).
+    - [ ] Comments on most nodes/functions (why, not what). Reviewed so far: `MoveToArea`, `MoveHeroToArea`, `SetAbilityDisplayInfo`, spawn loop/`SpawnUnit`, `FindEarliestAttacker`. To fix: spawn comment ("order fixed by the engine" is wrong: Get All Actors order isn't guaranteed; placement comes from `SpawnSide`); the counter reset after the spawn loop has no stated reason.
 - [ ] Resolve (`IsEnemyValidTarget`, damage, `AdvanceClock`, clear ability) → right click (`IA_Cancel`, #138).
 - [ ] Refactor step 3 confirm: play-test still spawns all 5 units with `BP_Unit` abstract.
 
 *Leftovers from the range-highlight step (for the review session, none blocks play):*
-- *The ability button tells the controller to Depaint and Paint. The widget is running the controller's painting; a controller entry point (e.g. `SelectAbility`: update → depaint → paint) would let the button just say "clicked".*
-- *`DepaintSelections` is still gated on a valid `SelectedArea`; it works because a hero always brings an Area, but the hero-look reset and the list loop don't need that gate.*
+- *~~The ability button runs the controller's painting~~ fixed 2026-11-01: `SelectAbility` entry point (#149).*
+- *~~`DepaintSelections` gated on `SelectedArea`~~ not true: "Is Not Valid" also runs the range loop and hero reset (checked 2026-11-01).*
 - *~~In ability mode the hero's unit isn't painted Selected~~ fixed 2026-10-31: `PaintSelections` paints the hero Selected before the ability check.*
 - *~~Area selected with no hero~~ settled 2026-10-31 (#147): hero valid → hero Selected, then ability → range / no ability → Area + neighbours; hero not valid → validated Get `SelectedArea` → Area Highlighted only. Checked through MCP.*
 - *Debug prints: "Added … to PaintedAreasInRange array!" in `PaintSelections`, "END OF THE LOOP" in the bar.*
 - *Naming: `UpdateSelected…` (state change) vs `Paint…/Depaint…` (looks) vs `DeselectAreasUnits` (does two things). `GetAreaUnderCursor` output is `HitArea`, `GetUnitUnderCursor` output is `HitUnit`; `UpdateSelectedHero`'s input is still `NewUnit`.*
 
-**Next session starts with…** skimming the Battle Logic Map, then cleanup **R1** in `PaintSelections` (paint + record inside the Map loop's True branch, delete the second loop and `AreasToPaintInRange`; test: Shot lights 1–3, Slash 0, switching heroes clears). Then the rest of the map's list one at a time (I1 `SelectAbility` entry point is the big one), comments written from the map, and the naming rule. Then back to T4: resolve. *(Session ended 2026-10-31 after ~5 h; tired. Keep the next one short.)*
+**Next session starts with…** the small leftovers from the map: delete `NumberOfAbilities`, rename `HandHealthChanged` → `HandleHealthChanged`, then D1, D2, P1. Then finish the comments (why, not what) and Step 3's naming rule. Then back to T4: resolve, which will be `SelectAbility`'s second caller via `IA_Cancel`. *(2026-11-01: R1–R4, I1, I2, I4 done.)*
 
 **Carried over from M5-T3:**
 - T5: the slot reads `BaseCostTenths` from the DA itself. When the real cost lives on the hero, the slot should be *given* the cost (a `CostTenths` input or a `SetCost` function) instead of working it out (#131).
@@ -490,3 +500,5 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Refactor**: changing how the code is built without changing what the player sees (making `BP_HeroUnit`, renaming `SelectedHero`). Test it by checking that nothing changed, then commit before adding new features.
 - **The "what breaks?" test**: imagine deleting a node, variable or step and ask what would go wrong. The answer is its *why*, and that's what its comment should say ("`PaintedAreasInRange` lets Depaint reset exactly the painted Areas"). If the honest answer is "nothing", the step is **redundant** (does work that's already done elsewhere), like `AreasToPaintInRange`, a list filled by one loop only so a second loop can read it.
 - **Dead code**: a function or variable nothing calls or reads any more, like the ability bar's old `PaintButton`. It still costs reading time and can mislead. Right-click → Find References proves it's unused before you delete it.
+- **Make Array**: a node that takes several separate inputs and returns one array, in the order you plug them in. The ability bar plugs in its 5 buttons left to right, so array index 0 is always the left slot. A loop over "all widgets of a class" can't promise that order.
+- **Implicit mode**: a function that guesses *why* it was called by looking at the data, instead of being told. `BP_Unit.MoveToArea` checks "am I already on my Area's list?" to tell a spawn placement from a real move. It works, but two functions (`PlaceInArea`, `MoveToArea`) would each say their job outright.
