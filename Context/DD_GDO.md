@@ -62,11 +62,11 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - Each ability has three numbers: `BaseCost`, `StrainRatio` and `StrainDuration`.
 - **Every use leaves a Strain** = the cost you just paid × `StrainRatio`. Each Strain fades on its own, in a straight line, from full to 0 over `StrainDuration`. Several Strains can be active at once.
 - **Current cost** = `BaseCost` + what's left of every active Strain, **rounded up once** to a whole tenth.
-  - What's left of one Strain = its amount × (1 − time since it happened ÷ `StrainDuration`).
+  - What's left of one Strain = its amount × (1 − time since **the cost was paid** ÷ `StrainDuration`). The fade starts when the hero finishes paying, not at the moment of the cast (Decisions #158).
 - Worked out **on demand** from the clock, never ticked: the fade is smooth in tenths even though the clock jumps.
-- **The cost *is* time**, so an ability's own recovery already fades its Strain. That's why `StrainDuration` is per ability: start at about **3× `BaseCost`**, or expensive abilities barely escalate.
+- **The cost *is* time**, so casts that follow each other fade the earlier Strains. That's why `StrainDuration` is per ability: start at about **3× `BaseCost`**, or expensive abilities barely escalate.
 - Spamming one ability **settles** at a higher cost instead of exploding; alternating heroes keeps it lower (the incentive in §4.1).
-- Example (placeholder numbers): Slash, base 1.5s, ratio 0.4, fade 4.5s, used back to back → 1.5s, 1.9s, 2.1s, 2.1s… A 4s ability with a 12s fade → 4.0, 5.1, 5.6, 5.5s…; with the other hero acting 2s between uses → 4.0, 4.8, 4.9s….
+- Example (placeholder numbers): Slash, base 1.5s, ratio 0.4, fade 4.5s, used back to back → 1.5s, 2.1s, 2.7s, 3.0s, 3.1s, settling at 3.2s. A 4s ability with a 12s fade → 4.0, 5.6, 7.1, 7.8, 8.2s…; with the other hero acting 2s between uses → 4.0, 5.4, 6.2, 6.4, 6.5s….
 - The `(+x)` numbers in the §6 tables are from the old rule. They get re-tuned as ratios when the kits are balanced.
 - **Everything escalates**, including the Basic Attack and the basic Move. ✅ The Basic Attack is still the "cheap option": slightly lower base cost and a smaller `StrainRatio` than other abilities. 🟡
 - ❓ Show escalation as a number on the ability button, or as a "heat" bar?
