@@ -133,8 +133,9 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 **Done when (T6):** the Warrior uses Shield Wall with two clicks; hits due inside its window take half damage (Ceil); hits due before or after it take full damage; the tag is gone once it has ended.
 
-**Next:** **M5-T6 – One status.** Design locked (#163–#168) and temporary enemy hit in (#169). `ReceiveDamage(DamageReceived, HitTimeTenths)` is in, fed by both callers and printed (#170). `ResolveAbility` loop fixed (#171) and `BPC_Health.ApplyDamage` back to damage only. Next step: the status store and the halving on `BP_Unit`, tested with a temporary window in Class Defaults (no button yet). After that: the tag's job and when it comes off, then the two-click flow (Miro first).
-*Still open:* a hit exactly at Start, what job the tag does, when the tag comes off.
+**Next:** **M5-T6 – One status.** Design locked (#163–#168) and temporary enemy hit in (#169). `ReceiveDamage(DamageReceived, HitTimeTenths)` is in, fed by both callers and printed (#170). `ResolveAbility` loop fixed (#171). Status store and halving built on `BP_Unit` (#172–#173). `E_TargetType`, `DA_ShieldWall` and `IsUnitValidTarget` are in (#174). Next step (proposed): tidy `IA_Select` with one gate (#175), and make `ResolveAbility` accept any `BP_Unit`, so Shield Wall reaches the real resolve. After that: apply the status from the ability's data. Still to confirm: the clock-jump test, and removing the temporary `Map Add` and T5 print from `BP_HeroUnit`'s BeginPlay.
+*Still open:* whether a Tag Container and tag removal are needed at all (Claude's pick: no; a finished window already answers false, and the Map can't grow past one entry per status). If dropped, change the roadmap line and the "tag is gone" criterion.
+*Known edge:* re-using Shield Wall while it's still up replaces the old window, so an attack due in the old window but replayed after the new one is stored takes full damage.
 *Remove when M6 arrives:* the temporary hit in `BP_EnemyUnit.ResolveAttack`.
 *Optional tidy-up:* `SpawnUnit` and `HandleUnitDeath` can drop the Team Switch and chain Cast Hero → Cast Failed → Cast Enemy.
 

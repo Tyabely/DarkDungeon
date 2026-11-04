@@ -528,3 +528,5 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Claude's side:** the first question about starting Shield Wall was unclear and had to be re-explained.
 - **Also found (T5-era wiring):** `ResolveAbility`'s Loop Body runs through to Return, so the array is never cleared.
 - **Update:** `ReceiveDamage` now carries `HitTimeTenths`; you tested the stamps from both enemy attacks and Slash.
+- **Update:** you built the status store (`Statuses`, `S_StatusWindow`, `IsStatusActive`) and the halving, and cleared the 8 old tag redirects. You used In Range's inclusive options instead of hand-written comparisons, and a Float conversion to avoid Integer division.
+- **Update:** you built `E_TargetType` and `IsUnitValidTarget`. Tripped up: the local was typed `BP_HeroUnit` with no wire from `Target`, so every check failed, and the Enemy case accepted heroes until it got a cast. You spotted that `IA_Select` was getting wiry before it was pointed out.
