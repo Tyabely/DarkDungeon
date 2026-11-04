@@ -493,3 +493,23 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - `EnemiesToDamage` as a member array never emptied.
   - The ability check only on the enemy branch, so Area clicks still deselected or moved the hero while aiming. You spotted this one yourself in play.
   - Long days on the paint logic led to burnout; one fix + one test at a time worked.
+
+**2026-11-04 · M5-T5 · Escalating cost** ✅ (abilities only, Move deferred)
+- **Learned:**
+  - **Work a value out on demand**: store two facts per Strain (how big, when it starts) and read the clock when asked. Your own formula (time left ÷ duration) is the GDO's formula turned around.
+  - **Nested data**: a Map value can't be an array, so `S_StrainList` wraps it, the same trick as `S_SlotLayout`. The DA can be a Map key because a key only reads it.
+  - **Copy vs the real thing**: Find gives a copy, so you write back with Map Add one level up. A plain array variable wouldn't need that.
+  - **Pure nodes re-run for each reader**: two nodes on one Find got two different copies. A local variable fixes that.
+  - **A function lives where its data lives**, and a "Get" only answers.
+  - **Announce only what happened**: `OnClockAdvanced` is the true refresh trigger. A dispatcher runs its listeners at once, so the order around it matters.
+  - **Debugging tools**: breakpoints with F10, Watch, the debug object dropdown, and F8 eject, plus reading the Output Log's runtime errors.
+- **Tripped up:**
+  - The loop's Completed pin had no Return, so the function returned 0. Two prints were correct: two heroes.
+  - Thought a Strain was being added when the Details panel was showing the test Strain from the Class Defaults.
+  - Array Add on the copy with no write-back, then Make S Strain List reading a fresh copy. This needed the exact answer (L3).
+  - A NOT node left with no input after removing Nearly Equal kept the Branch always false.
+  - Refreshing the buttons with `OnSelectedHeroChanged`, then a second `OnClockAdvanced` carrying 0: both announced things that didn't happen.
+  - After moving the Strain before `AdvanceClock`, Start read the old clock, which behaved as "before". You noticed this from the numbers.
+  - Dead units stayed in `UnitsInArea`, so `ArrangeUnits` hit destroyed actors (found through the log).
+  - Design: spamming felt marginal, which led to the After reference. You're still unsure about the whole system, so Move stays flat for now.
+- **Claude's side:** said a Get through `SelectedHero` might write to a copy. That was wrong, and it was corrected the next turn.

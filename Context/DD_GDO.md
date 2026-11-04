@@ -68,11 +68,12 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - Spamming one ability **settles** at a higher cost instead of exploding; alternating heroes keeps it lower (the incentive in §4.1).
 - Example (placeholder numbers): Slash, base 1.5s, ratio 0.4, fade 4.5s, used back to back → 1.5s, 2.1s, 2.7s, 3.0s, 3.1s, settling at 3.2s. A 4s ability with a 12s fade → 4.0, 5.6, 7.1, 7.8, 8.2s…; with the other hero acting 2s between uses → 4.0, 5.4, 6.2, 6.4, 6.5s….
 - The `(+x)` numbers in the §6 tables are from the old rule. They get re-tuned as ratios when the kits are balanced.
-- **Everything escalates**, including the Basic Attack and the basic Move. ✅ The Basic Attack is still the "cheap option": slightly lower base cost and a smaller `StrainRatio` than other abilities. 🟡
+- **Everything escalates**, including the Basic Attack and the basic Move. 🟡 The Basic Attack is still the "cheap option": slightly lower base cost and a smaller `StrainRatio` than other abilities. 🟡
+- **Not final (2026-11-04):** Strain may still be replaced by a different or simpler system. Only abilities escalate so far; Move stays at a flat 1s per Area until this is settled (Decisions #159).
 - ❓ Show escalation as a number on the ability button, or as a "heat" bar?
 
 #### 4.3 Movement ✅
-- **Every hero has a basic Move** action (not one of their abilities). It costs seconds per Area moved (e.g. 1s per Area) and **escalates** like everything else, so you can't reposition for free over and over. ✅
+- **Every hero has a basic Move** action (not one of their abilities). It costs seconds per Area moved (e.g. 1s per Area). ✅ It's meant to **escalate** like everything else, so you can't reposition for free over and over 🟡 (not built, see §4.2).
 - **Controls (built in M2-T6):** click a hero to select it, click a **neighbouring** Area to move one step there; a full Area or a non-neighbour refuses the move. The hero stays selected afterwards, so several steps are quick clicks. Click the same hero/Area again, or empty space, to deselect. Only heroes can be selected. An Area clicked with no hero selected lights up alone; neighbours show only around a selected hero (#147). ✅ (Cost and multi-Area moves come with the time system, M4.)
 - **Targeting controls (decided M5-T4):** with an ability selected, click an **enemy** in range to use it. The ability then clears and the hero stays selected. A click on an enemy out of range, on an Area or on nothing shows a message and keeps the selection. While an ability is selected, Area clicks never move the hero. **Right click** cancels in layers: first the ability, then the hero. Area abilities (target an Area, may hit nothing) come later. ✅ (Decisions #136–#140)
 - **Every hero also has a 5th ability: a Mobility ability** that moves *and* does something (e.g. Charge: move + hit). ✅ See §6.
