@@ -87,6 +87,7 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 
 #### 4.5 Statuses 🟡
 - Durations in seconds, not turns (e.g. Bleed 30 dmg every 1s for 4s). Fits the timeline naturally. ❓ confirm
+- **Shield Wall (decided M5-T6):** press the button, then click the Warrior. The 4 s starts once the 2 s cost is paid, so attacks during the cost aren't protected. A hit counts by the time it was due, and one due exactly as the shield ends is still halved. Halved damage rounds up. ✅ (Decisions #164–#168)
 
 #### 4.6 Battle Clock ✅
 - **Not a general rule.** Some levels can have it as a special feature (e.g. "Reinforcements arrive at 30s"). Not in MVP.

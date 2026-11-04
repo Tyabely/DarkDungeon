@@ -131,7 +131,12 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 - [x] **T5 – Escalating cost.** ✅ 2026-11-04, abilities only. `BP_HeroUnit.StrainList` = Map `PDA_HeroAbility` → `S_StrainList` (array of `S_Strain` { `Amount`, `StrainStartClockTenths` }). `GetAbilityTotalCost` works the cost out on demand from the clock (Base + Ceil of what's left). `ResolveAbility` saves the cost once, adds the Strain with Start = clock + cost, writes the list back with Map Add, then `AdvanceClock`. `WBP_AbilityBar` refreshes on `OnClockAdvanced`. Move escalation deferred on purpose (#158–#162).
 - [ ] **T6 – One status.** One timed status as a Gameplay Tag in a Tag Container on the unit (e.g. Shield Wall's half damage for 4s), expiring on the clock.
 
-**Next:** **M5-T6 – One status.** First step: pick the one status and sketch on paper how it starts, what it changes, and how it knows when to expire on the clock. No nodes yet.
+**Done when (T6):** the Warrior uses Shield Wall with two clicks; hits due inside its window take half damage (Ceil); hits due before or after it take full damage; the tag is gone once it has ended.
+
+**Next:** **M5-T6 – One status.** Design locked (#163–#168) and temporary enemy hit in (#169). Next step: `ReceiveDamage` gets a `HitTimeTenths` input, fed by both callers and only printed for now, so behaviour doesn't change. After that: the status store and the halving, then the two-click flow (Miro first).
+*Still open:* a hit exactly at Start, what job the tag does, when the tag comes off.
+*Remove when M6 arrives:* the temporary hit in `BP_EnemyUnit.ResolveAttack`.
+*Optional tidy-up:* `SpawnUnit` and `HandleUnitDeath` can drop the Team Switch and chain Cast Hero → Cast Failed → Cast Enemy.
 
 **Carried over from M5-T5:**
 - Not confirmed in play: spam Slash and check the button goes 1.5 → 2.1 → 2.7 → 3.0 → 3.1 → 3.2. Graphs were checked through MCP; the run itself wasn't seen.
@@ -493,3 +498,6 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Watch value**: right-click a pin → Watch This Value. The value appears in a bubble on the node and in **Debug → Blueprint Debugger**, without adding a Print String.
 - **Debug object**: the Blueprint toolbar dropdown that picks which instance you're inspecting. Warrior and Archer share `BP_HeroUnit`, so choose one while playing, or you may read the other's values.
 - **F8 eject**: during Play, F8 frees the mouse from the game. Select an actor in the Outliner and its Details panel shows live values for what's exposed there.
+- **Status**: a temporary condition on a unit: it starts, changes something while active, then ends. Shield Wall's half damage for 4 s is one.
+- **Timestamp check**: judging an event by the time stamped on it, not by the time when it gets processed. Like a speed camera: the fine depends on the time in the photo, not on when the letter is opened. An enemy attack due at 7.0 that resolves when the clock reads 8.5 is judged at 7.0.
+- **Logic vs presentation**: logic is what happened and at what game time; presentation is how the player watches it, in real seconds. Keeping them apart means a longer animation can't change the damage.

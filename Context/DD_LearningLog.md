@@ -513,3 +513,15 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
   - Dead units stayed in `UnitsInArea`, so `ArrangeUnits` hit destroyed actors (found through the log).
   - Design: spamming felt marginal, which led to the After reference. You're still unsure about the whole system, so Move stays flat for now.
 - **Claude's side:** said a Get through `SelectedHero` might write to a copy. That was wrong, and it was corrected the next turn.
+
+**2026-11-04 · M5-T6 (step) · Shield Wall design + temporary enemy hit** 🔄
+- **Learned:**
+  - **A tag is only a label**: it can say "I have this" but not "until when", so the end time has to live beside it.
+  - **Delay counts real seconds**, but the battle clock only moves when the player acts, so a Delay can't time a status.
+  - **Timestamp check**: judge a hit by when it was due, not by the clock when it gets resolved. That also keeps results independent of animations (logic vs presentation).
+  - **Pure nodes again**: `Random Integer` + `GET` re-rolled per reader, so the log could name the wrong hero. A saved `TargetHero` fixes it.
+  - Planned ahead for four damage modifiers and worked out where they belong.
+- **Tripped up:**
+  - The first sketch had a Delay-style trigger and End + 1. You spotted the "attack at exactly the end" case yourself.
+  - The first sketch put "taken" modifiers in `BPC_Health`, against #122.
+- **Claude's side:** the first question about starting Shield Wall was unclear and had to be re-explained.
