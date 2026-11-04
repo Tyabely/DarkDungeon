@@ -133,7 +133,7 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 
 **Done when (T6):** the Warrior uses Shield Wall with two clicks; hits due inside its window take half damage (Ceil); hits due before or after it take full damage; the tag is gone once it has ended.
 
-**Next:** **M5-T6 – One status.** Design locked (#163–#168) and temporary enemy hit in (#169). Next step: `ReceiveDamage` gets a `HitTimeTenths` input, fed by both callers and only printed for now, so behaviour doesn't change. After that: the status store and the halving, then the two-click flow (Miro first).
+**Next:** **M5-T6 – One status.** Design locked (#163–#168) and temporary enemy hit in (#169). `ReceiveDamage(DamageReceived, HitTimeTenths)` is in, fed by both callers and printed (#170). `ResolveAbility` loop fixed (#171) and `BPC_Health.ApplyDamage` back to damage only. Next step: the status store and the halving on `BP_Unit`, tested with a temporary window in Class Defaults (no button yet). After that: the tag's job and when it comes off, then the two-click flow (Miro first).
 *Still open:* a hit exactly at Start, what job the tag does, when the tag comes off.
 *Remove when M6 arrives:* the temporary hit in `BP_EnemyUnit.ResolveAttack`.
 *Optional tidy-up:* `SpawnUnit` and `HandleUnitDeath` can drop the Team Switch and chain Cast Hero → Cast Failed → Cast Enemy.

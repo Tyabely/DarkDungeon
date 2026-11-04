@@ -524,4 +524,7 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Tripped up:**
   - The first sketch had a Delay-style trigger and End + 1. You spotted the "attack at exactly the end" case yourself.
   - The first sketch put "taken" modifiers in `BPC_Health`, against #122.
+  - The new input also ended up on `BPC_Health.ApplyDamage`, where nothing uses it (receives 0).
 - **Claude's side:** the first question about starting Shield Wall was unclear and had to be re-explained.
+- **Also found (T5-era wiring):** `ResolveAbility`'s Loop Body runs through to Return, so the array is never cleared.
+- **Update:** `ReceiveDamage` now carries `HitTimeTenths`; you tested the stamps from both enemy attacks and Slash.
