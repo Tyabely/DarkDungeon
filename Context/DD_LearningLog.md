@@ -530,3 +530,17 @@ Over time this becomes your portfolio story: what you could do at the start vs. 
 - **Update:** `ReceiveDamage` now carries `HitTimeTenths`; you tested the stamps from both enemy attacks and Slash.
 - **Update:** you built the status store (`Statuses`, `S_StatusWindow`, `IsStatusActive`) and the halving, and cleared the 8 old tag redirects. You used In Range's inclusive options instead of hand-written comparisons, and a Float conversion to avoid Integer division.
 - **Update:** you built `E_TargetType` and `IsUnitValidTarget`. Tripped up: the local was typed `BP_HeroUnit` with no wire from `Target`, so every check failed, and the Enemy case accepted heroes until it got a cast. You spotted that `IA_Select` was getting wiry before it was pointed out.
+- **Update (2026-11-10):** the gate became one call (`IsUnitValidTarget` handles "no ability"); you kept the click paths in the graph on purpose. `ResolveAbility` reshaped with `AddStrain`. Tripped up: copying nodes into another Blueprint drops local variables and pulls in `AdvanceClock` with the wrong Target; Shield Wall failed on a wiring mistake in the gate, which you found yourself, not on an empty `SelectedHero` as first suspected. **Claude's side:** wrongly reported `Enable Input` as missing (searched the wrong node title).
+
+**2026-11-10 · M5-T6 · One status (Shield Wall)** ✅ (closes M5)
+- **Learned:**
+  - **Timestamps over "right now"**: a status is judged at the time a hit was due, so the clock jumping and attacks replaying later can't change the result, and neither will animations.
+  - **Data over flags**: `E_TargetType` answers "what can I click", the ability's status Map answers "what happens". Your Map version lets one ability apply several statuses.
+  - **Order inside a resolve**: work out the cost first, store everything enemies will read, then advance the clock last.
+  - **One gate** in front of the click logic instead of checks in every path; pushing "no ability" into the function made it a single call.
+  - Locals don't travel when nodes are copied to another Blueprint; Collapse to Function hides branching but doesn't remove it.
+- **Tripped up:**
+  - Missing wires, three times (`SET Unit to Validate` twice, the gate's `Target`). Each looked like a logic bug.
+  - A rewire dropped the "ability selected?" check, so Area clicks moved the hero with an ability selected.
+  - Suspected an empty `SelectedHero` before checking the wire.
+- **Claude's side:** misread a node search as "Enable Input is missing"; recorded a decision as agreed before you'd agreed (corrected the same turn).

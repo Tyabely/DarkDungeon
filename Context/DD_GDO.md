@@ -76,6 +76,7 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - **Every hero has a basic Move** action (not one of their abilities). It costs seconds per Area moved (e.g. 1s per Area). ✅ It's meant to **escalate** like everything else, so you can't reposition for free over and over 🟡 (not built, see §4.2).
 - **Controls (built in M2-T6):** click a hero to select it, click a **neighbouring** Area to move one step there; a full Area or a non-neighbour refuses the move. The hero stays selected afterwards, so several steps are quick clicks. Click the same hero/Area again, or empty space, to deselect. Only heroes can be selected. An Area clicked with no hero selected lights up alone; neighbours show only around a selected hero (#147). ✅ (Cost and multi-Area moves come with the time system, M4.)
 - **Targeting controls (decided M5-T4):** with an ability selected, click an **enemy** in range to use it. The ability then clears and the hero stays selected. A click on an enemy out of range, on an Area or on nothing shows a message and keeps the selection. While an ability is selected, Area clicks never move the hero. **Right click** cancels in layers: first the ability, then the hero. Area abilities (target an Area, may hit nothing) come later. ✅ (Decisions #136–#140)
+- **Self abilities (decided M5-T6):** select the ability, then click the caster. Clicking another hero with a Self ability selected just selects that hero. Abilities say what they can target (Enemy / Self / Any Hero, the last one for Heal). ✅ (Decisions #164, #174)
 - **Every hero also has a 5th ability: a Mobility ability** that moves *and* does something (e.g. Charge: move + hit). ✅ See §6.
 - **Enemies move the board-game way:** they move up to the **move distance of the action they're doing** (in Areas) toward their target, then attack if they're in range. Distance belongs to each move action, not to the unit, so one enemy can have a short move and a long one (decided M3-T1). If they can't reach, they still move as far as they can and the attack doesn't happen. ✅
 
@@ -86,8 +87,9 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - ❓ *(low priority, decide during M6)* Is the *target* shown in advance, or only the action?
 
 #### 4.5 Statuses 🟡
-- Durations in seconds, not turns (e.g. Bleed 30 dmg every 1s for 4s). Fits the timeline naturally. ❓ confirm
-- **Shield Wall (decided M5-T6):** press the button, then click the Warrior. The 4 s starts once the 2 s cost is paid, so attacks during the cost aren't protected. A hit counts by the time it was due, and one due exactly as the shield ends is still halved. Halved damage rounds up. ✅ (Decisions #164–#168)
+- Durations in seconds, not turns (e.g. Bleed 30 dmg every 1s for 4s). Fits the timeline naturally. ✅ confirmed by Shield Wall (M5-T6).
+- **Shield Wall (decided M5-T6):** press the button, then click the Warrior. The 5 s starts at the cast, so it also covers the 2 s cost. A hit counts by the time it was due, and one due exactly as the shield ends is still halved. Halved damage rounds up. ✅ (Decisions #164, #166–#168, #180)
+- **Every ability effect lands at the cast** (damage, buffs, debuffs); the cost is **recovery time**, the time the hero is busy afterwards. An ability that really needs a delay gets it from its own data later, not from a buff/debuff rule. ✅ (Decision #180)
 
 #### 4.6 Battle Clock ✅
 - **Not a general rule.** Some levels can have it as a special feature (e.g. "Reinforcements arrive at 30s"). Not in MVP.
@@ -115,7 +117,7 @@ How to read the Cost column: `2 (+1)` = costs 2s now, and each use adds +1s to t
 | A1 | Slash | 1.5 (+0.5) | 0 | 80–110 dmg to 1 enemy |
 | A2 | Cleave | 3 (+2) | 0 | 60–80 dmg to all enemies in Area |
 | A3 | Crushing Blow | 4 (+3) | 0 | 150–190 dmg to 1 enemy |
-| A4 | Shield Wall | 2 (+3) | self | Take ½ dmg for 4s; enemies in Area must target Warrior |
+| A4 | Shield Wall | 2 (+3) | self | Take ½ dmg for 5s (from the cast); enemies in Area must target Warrior |
 | A5 | Charge | 3 (+2) | 1–2 | Move to target Area, 90–120 dmg, push target 1 Area |
 
 **Archer**: backline, wants distance. HP ~800.
