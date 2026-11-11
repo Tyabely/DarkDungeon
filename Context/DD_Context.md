@@ -124,13 +124,19 @@ Each milestone has a playable result and a set of UE concepts it teaches. Order 
 **M6 – Enemy AI** · 🔄 in progress. Goal: enemies pick a real action, choose a target, move toward it the board-game way, and hit it for real; the intent line telegraphs what's coming (GDO §4.3, §4.4, §7).
 *(Draft task list, written when M5 closed. Change it freely as M6 goes. T2 and T3 are branchy, so sketch a Miro flowchart first.)*
 
-- [ ] **T1 – Real enemy hits.** Replace the temporary random-hero hit in `BP_EnemyUnit.ResolveAttack` (#169): the attack picks a target by one rule (start with **Closest**, GDO §4.4), checks range, and calls `ReceiveDamage` with its due time. Out of range = no hit for now.
-- [ ] **T2 – Move then attack.** An enemy action moves up to its own move distance toward the target (`GetDistancesFromArea`, Area capacity), then attacks if in range (GDO §4.3).
+- [ ] **T1 – Real enemy hits (locked target + fallback, GDO §4.4, #182).** No movement yet.
+  - `SelectNextAttack` ranks the heroes by the attack's rule and **locks** the #1 hero.
+  - `ResolveAttack` hits the locked hero if it's alive and in range; otherwise the best-ranked hero in range; otherwise no hit (print it). `ReceiveDamage` gets the due time.
+  - **Done when:** all four rules lock the right hero (checked in the log), the fallback hits a hero in range when the locked one is out of reach or dead, and "no hero in range" prints instead of hitting.
+- [ ] **T2 – Move then attack.** An enemy action moves up to its own move distance toward the **locked** target (`GetDistancesFromArea`, Area capacity), then resolves the hit the T1 way (GDO §4.3).
 - [ ] **T3 – Choosing the next action.** Settle "half fixed, half random" (GDO open question 1), e.g. a fixed opener then a weighted random pick, and build it in `SelectNextAttack`.
-- [ ] **T4 – Telegraph.** Real action names in the data ("Bite"), and the intent line shows action + target rule. Decide whether the target itself is shown (GDO open question 2).
+- [ ] **T4 – Telegraph.** Real action names in the data ("Bite"), and the intent line shows action + **locked hero** ("Bite → Archer, 4.0s").
 - [ ] **T5 – Enemies use the ability system.** The Ghoul's Self-Buff reuses statuses (#172, #178), which needs the first "dealt" modifier (#167). Shield Wall's "enemies in the Area must target the Warrior" half (#163) fits here or in T1.
 
-**Next:** **M6-T1 – Real enemy hits.** First step: on paper, list what an enemy attack needs to know (who is closest, by what measure, what if there's a tie, what if nobody is in range) and where each answer already lives. No nodes yet.
+**Next:** **M6-T1 – Real enemy hits.**
+- **Built so far (2026-11-11):** in `ResolveAttack`, a loop over `HeroesQueue` keeps the lowest score. `GetHeroInfoRegardingTargeting(Hero, Attack)` returns one score where lower = better: distance or health, ×1 or ×−1, picked by a **Select** on the attack's target rule. Highest HP was tested in PIE. The distance bug (distance measured from the hero's own Area, always 0) is fixed. A hero dying now clears the selection (not yet checked by Claude).
+- **Next session starts with:** move the ranking loop into its own function with an "only heroes in range" switch, call it in `SelectNextAttack` and store the result as the locked target, then print the locked hero to test. Trap: the loop starts "best so far" at index 0, and that hero might be filtered out.
+- Ties (random pick) are parked (GDO §4.4 ❓).
 
 **Carried over from M5-T6:**
 - The halving was confirmed by you in play; the log can't show it, because the debug line prints the rolled damage ("for 77 DMG") before `ReceiveDamage` halves it. Printing the final amount in `ReceiveDamage` would make future tests checkable from the log.
@@ -515,3 +521,9 @@ Plain-language definitions of every term used in these docs. When a new one come
 - **Logic vs presentation**: logic is what happened and at what game time; presentation is how the player watches it, in real seconds. Keeping them apart means a longer animation can't change the damage.
 - **Gate**: one check placed in front of existing logic that decides whether a special case applies, so the paths behind it don't each need their own copy. In `IA_Select`, "is this click a valid target for the selected ability?" comes first; if not, the normal hero / Area logic runs unchanged.
 - **Target type**: what an ability is allowed to be used on (`E_TargetType`: Enemy, Self, Any Hero). It answers "what can I click?" only; what the ability then does comes from its other data (damage, statuses).
+- **Wind-up vs recovery**: where an action's time cost sits. Wind-up = wait first, then the effect lands (enemies: "Bite in 4.0s"). Recovery = effect at once, then busy for the cost (heroes). The action itself always takes 0 s.
+- **Score (ranking)**: turn every targeting rule into one number where lower = better, so one comparison serves all rules. Like a sports day where high-jump results get a minus sign so "lowest wins" works for every event. Closest = distance, Furthest = distance × −1.
+- **Select node**: a pure node that outputs one of several inputs, chosen by an index or enum. `GetHeroInfoRegardingTargeting` uses it to pick distance or health (×1 or ×−1) from the attack's target rule.
+- **Locked target**: the hero an enemy intent commits to when it's set, so the telegraph names a real hero instead of a rule whose answer keeps changing.
+- **Fallback**: the second choice used when the first one fails. If the locked hero is out of reach or dead, the enemy hits the best-ranked hero in range.
+- **Bodyblocking**: standing in an enemy's path so it hits you instead of the ally behind you. The fallback rule gives it to the Warrior for free.

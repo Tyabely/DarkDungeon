@@ -78,13 +78,20 @@ Wynncraft, minecraft MMO-RPG \- the 4 ability of each classes
 - **Targeting controls (decided M5-T4):** with an ability selected, click an **enemy** in range to use it. The ability then clears and the hero stays selected. A click on an enemy out of range, on an Area or on nothing shows a message and keeps the selection. While an ability is selected, Area clicks never move the hero. **Right click** cancels in layers: first the ability, then the hero. Area abilities (target an Area, may hit nothing) come later. ✅ (Decisions #136–#140)
 - **Self abilities (decided M5-T6):** select the ability, then click the caster. Clicking another hero with a Self ability selected just selects that hero. Abilities say what they can target (Enemy / Self / Any Hero, the last one for Heal). ✅ (Decisions #164, #174)
 - **Every hero also has a 5th ability: a Mobility ability** that moves *and* does something (e.g. Charge: move + hit). ✅ See §6.
-- **Enemies move the board-game way:** they move up to the **move distance of the action they're doing** (in Areas) toward their target, then attack if they're in range. Distance belongs to each move action, not to the unit, so one enemy can have a short move and a long one (decided M3-T1). If they can't reach, they still move as far as they can and the attack doesn't happen. ✅
+- **Enemies move the board-game way:** they move up to the **move distance of the action they're doing** (in Areas) toward their **locked target** (§4.4), then attack. Distance belongs to each move action, not to the unit, so one enemy can have a short move and a long one (decided M3-T1). If they can't reach the locked target, they still move as far as they can and hit the **best-ranked hero in range** instead. Only when no hero is in range does the attack miss. ✅ (Decisions #182)
 
 #### 4.4 Enemy Intents 🟡
 - Each enemy always shows its **next action + seconds left** ("3.5s Move + Attack Closest"). ✅ Built in M4-T5 as a line above the enemy's health bar ("GhoulAttack2 | 3.0s"). An attack that's due but still waiting its turn shows **0.0s** = "resolving now". ✅
 - **HUD timeline** (planned, M5 or M8): a bar across the top of the screen from 0 to 10+ seconds; each enemy's icon sits where its next action lands, and hovering an icon shows the details. Shows the *order* and the gaps at a glance. 🟡
-- Targeting labels ✅: **Closest / Furthest / Highest HP / Lowest HP**. Each enemy action picks one; we'll choose per enemy as we design them.
-- ❓ *(low priority, decide during M6)* Is the *target* shown in advance, or only the action?
+- **Timing (decided M6-T1):** an enemy action **waits its cost, then lands** at its due time ("Bite in 4.0s" = the bite comes in 4 s). Heroes are the other way round: effect at the cast, cost = recovery (§4.5). So intents are honest warnings the player can react to. ✅ (Decisions #181)
+- **Targeting rules** ✅: **Closest / Furthest / Highest HP / Lowest HP**. Each enemy action picks one; we'll choose per enemy as we design them. The rule **ranks** the heroes (best first); distance = Area steps from the enemy.
+- **Locked target (decided M6-T1):** ✅ (Decisions #182)
+  1. **When the intent is set**, the rule ranks the heroes and the #1 hero is **locked** as the target. The intent can name that hero ("Bite → Archer, 4.0s"), so the player can plan against it.
+  2. **When the action lands**, the enemy moves toward the locked hero (§4.3), then hits it if it's in range.
+  3. **Fallback:** if the locked hero is out of range or dead, the enemy hits the **best-ranked hero in range**, ranked again at that moment. Nobody in range = no hit.
+  - Why: no pointless misses while a hero stands right there, and **bodyblocking** comes for free (the Warrior in the path takes the hit meant for the Archer).
+- ❓ Ties in the ranking (two heroes equally close): planned random pick, parked for now.
+- ❓ Shield Wall's "enemies in Area must target the Warrior" (§6): does it replace the locked target at landing time, or re-lock when cast?
 
 #### 4.5 Statuses 🟡
 - Durations in seconds, not turns (e.g. Bleed 30 dmg every 1s for 4s). Fits the timeline naturally. ✅ confirmed by Shield Wall (M5-T6).
@@ -137,7 +144,7 @@ Post-MVP: Mage, Assassin, Shaman.
 
 ### 7. Enemies 🟡 (MVP: 2 types)
 
-Enemies move toward their target up to the action's **move distance** (Areas), then attack if in range (§4.3). The Move column is the distance their move actions use for now.
+Enemies move toward their locked target up to the action's **move distance** (Areas), then attack it, or the best-ranked hero in range if it's out of reach (§4.3, §4.4). The Move column is the distance their move actions use for now.
 
 | Enemy | HP | Move | Actions |
 |---|---|---|---|
